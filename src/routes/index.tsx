@@ -103,6 +103,15 @@ function Ritual() {
   const [visionBusy, setVisionBusy] = useState(false);
   const [vision, setVision] = useState<{ image_url: string | null; prompt: string } | null>(null);
 
+  const voiceRef = useRef<VoiceApi | null>(null);
+  const [speakBusy, setSpeakBusy] = useState<string | null>(null);
+  const speak = useCallback(async (label: string, text: string) => {
+    if (!text.trim() || !voiceRef.current) return;
+    setSpeakBusy(label);
+    try { await voiceRef.current.speak(`Please speak this aloud to the seeker, in your voice: "${text}"`); }
+    finally { setSpeakBusy(null); }
+  }, []);
+
   const [history, setHistory] = useState<PastReading[]>(() => {
     if (typeof window === "undefined") return [];
     try {
