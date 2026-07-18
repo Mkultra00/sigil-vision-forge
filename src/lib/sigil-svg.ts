@@ -33,14 +33,14 @@ function rng(seed: number) {
 
 // Deterministic-but-varied sigil. Geometry, rotation, curvature and vertex
 // glyphs are all seeded by the reduced statement, so no two intents look alike.
-export function buildSigilSvg(reduced: string, size = 480): string {
+export function buildSigilSvg(reduced: string, size = 480, statement?: string): string {
   const letters = reduced.length ? reduced : "SIGIL";
   const seed = hash32(letters);
   const rand = rng(seed);
 
   const cx = size / 2;
   const cy = size / 2;
-  const R = size * 0.34;
+  const R = size * 0.30;
 
   // Number of points on the outer circle varies (17–29), so mapping shifts.
   const N = 17 + (seed % 13);
@@ -85,6 +85,35 @@ export function buildSigilSvg(reduced: string, size = 480): string {
     return `<path d="M ${(x-3).toFixed(1)} ${(y-3).toFixed(1)} L ${(x+3).toFixed(1)} ${(y+3).toFixed(1)} M ${(x+3).toFixed(1)} ${(y-3).toFixed(1)} L ${(x-3).toFixed(1)} ${(y+3).toFixed(1)}" stroke="#f4e4b8" stroke-width="1"/>`;
   }).join("\n  ");
 
+  // Letters of the reduced statement — placed AT each vertex the line touches.
+  // These are what the sigil is bound from; showing them makes it legible.
+  const vertexLetters = [...letters].map((ch, i) => {
+    const [x, y] = pt(points[i]);
+    // push outward from center so glyph and letter don't overlap
+    const ang = Math.atan2(y - cy, x - cx);
+    const lx = x + Math.cos(ang) * 14;
+    const ly = y + Math.sin(ang) * 14;
+    return `<text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="middle" dominant-baseline="middle" font-family="Georgia, serif" font-size="12" fill="#f4e4b8" opacity="0.85">${ch}</text>`;
+  }).join("\n  ");
+
+  // Esoteric orbit — alchemical / planetary glyphs seeded per statement.
+  const ESOTERIC = ["☉","☽","☿","♀","♂","♃","♄","♅","♆","♇","☿","🜍","🜔","🜁","🜂","🜃","🜄","⚸","☊","☋","✶","✷","☌","⚹","△","▽","⊕","⊖","✵"];
+  const orbitR = R + 44;
+  const K = 12;
+  const esoteric = Array.from({ length: K }).map((_, i) => {
+    const a = (i / K) * Math.PI * 2 + rot * 0.5;
+    const ex = cx + Math.cos(a) * orbitR;
+    const ey = cy + Math.sin(a) * orbitR;
+    const sym = ESOTERIC[(seed + i * 7) % ESOTERIC.length];
+    return `<text x="${ex.toFixed(1)}" y="${ey.toFixed(1)}" text-anchor="middle" dominant-baseline="middle" font-size="14" fill="#d4b878" opacity="0.75">${sym}</text>`;
+  }).join("\n  ");
+
+  // Statement inscribed around the outer ring via textPath.
+  const inscription = statement
+    ? `<defs><path id="ins-${seed}" d="M ${cx} ${cy} m -${(R+62).toFixed(1)} 0 a ${(R+62).toFixed(1)} ${(R+62).toFixed(1)} 0 1 1 ${((R+62)*2).toFixed(1)} 0 a ${(R+62).toFixed(1)} ${(R+62).toFixed(1)} 0 1 1 -${((R+62)*2).toFixed(1)} 0"/></defs>
+  <text font-family="Georgia, serif" font-size="11" fill="#d4b878" opacity="0.7" letter-spacing="3"><textPath href="#ins-${seed}" startOffset="0">${statement.replace(/[<>&]/g, "")} · </textPath></text>`
+    : "";
+
   // Inner ornament: a star polygon whose skip varies by seed.
   const inner: string[] = [];
   const M = 5 + (seed % 4); // 5..8 vertices
@@ -119,13 +148,18 @@ export function buildSigilSvg(reduced: string, size = 480): string {
     </radialGradient>
   </defs>
   <rect width="${size}" height="${size}" fill="url(#bg-${seed})"/>
+  <circle cx="${cx}" cy="${cy}" r="${R + 70}" fill="none" stroke="#d4b878" stroke-width="0.6" opacity="0.35"/>
+  <circle cx="${cx}" cy="${cy}" r="${R + 54}" fill="none" stroke="#d4b878" stroke-width="0.4" opacity="0.25"/>
   <circle cx="${cx}" cy="${cy}" r="${R + 26}" fill="none" stroke="#d4b878" stroke-width="1" opacity="0.6"/>
   <circle cx="${cx}" cy="${cy}" r="${R + 12}" fill="none" stroke="#d4b878" stroke-width="0.5" opacity="0.35"/>
   <circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="#d4b878" stroke-width="0.5" opacity="0.3" stroke-dasharray="2 6"/>
   ${ticks.join("\n  ")}
+  ${esoteric}
+  ${inscription}
   ${inner.join("\n  ")}
   <path d="${path}" fill="none" stroke="#f4e4b8" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
   ${glyphs}
+  ${vertexLetters}
   <circle cx="${x0.toFixed(1)}" cy="${y0.toFixed(1)}" r="5.5" fill="#f4e4b8"/>
   <circle cx="${xL.toFixed(1)}" cy="${yL.toFixed(1)}" r="4" fill="none" stroke="#f4e4b8" stroke-width="1.5"/>
 </svg>`;
