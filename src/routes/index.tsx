@@ -10,7 +10,7 @@ import { VoiceAgent, type VoiceApi } from "@/components/VoiceAgent";
 import { tarotImageUrl } from "@/lib/tarot-images";
 import { HexagramGlyph } from "@/components/HexagramGlyph";
 import { ZodiacWheel } from "@/components/ZodiacWheel";
-import { Mandala } from "@/components/Mandala";
+import { buildSigilSvg, reduceLetters } from "@/lib/sigil-svg";
 import shamanAvatar from "@/assets/shaman-avatar.jpg";
 
 export const Route = createFileRoute("/")({
@@ -628,6 +628,20 @@ function HoroscopePanel({
   );
 }
 
+function FocusSigil({ statement, seedText, size = 320 }: { statement: string; seedText: string; size?: number }) {
+  const reduced = reduceLetters(seedText || statement);
+  const svg = buildSigilSvg(reduced, size, seedText || statement);
+  return (
+    <div
+      className="rounded-full overflow-hidden drop-shadow-[0_0_40px_rgba(217,180,110,0.25)]"
+      style={{ width: size, height: size }}
+      role="img"
+      aria-label="Focus sigil"
+      dangerouslySetInnerHTML={{ __html: svg }}
+    />
+  );
+}
+
 function SpellPanel({
   intent,
   setIntent,
@@ -677,7 +691,7 @@ function SpellPanel({
       {spell && (
         <div className="mt-8 grid gap-8 md:grid-cols-[auto,1fr] items-start">
           <div className="flex justify-center md:justify-start">
-            <Mandala seed={spell.mandala_seed} size={320} />
+            <FocusSigil statement={`${spell.mantra} ${spell.affirmation}`} seedText={spell.mandala_seed} size={320} />
           </div>
           <div className="space-y-5">
             <div>
