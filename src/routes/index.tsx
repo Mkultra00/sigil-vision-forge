@@ -357,7 +357,7 @@ function Ritual() {
             busy={spellBusy}
             spell={spell}
             onCast={onCastSpell}
-            onSpeak={(key, text) => speak(key, text)}
+            onSpeak={(key: string, text: string) => speak(key, text)}
             speakingKey={speakBusy}
           />
         )}
