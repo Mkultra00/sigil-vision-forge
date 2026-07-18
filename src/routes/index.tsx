@@ -369,8 +369,6 @@ function Ritual() {
                     })),
                     positions: interpretation?.positions,
                     synthesis: interpretation?.synthesis,
-                    sigil: sigil ? { statement: sigil.statement, reduced: sigil.reduced, has_image: !!sigil.image_url } : null,
-                    pending_intent: intent && (!sigil || sigil.statement !== intent) ? intent : undefined,
                     vision: vision ? { prompt: vision.prompt, has_image: !!vision.image_url } : null,
                     history: history
                       .filter((h) => h.id !== reading.id)
@@ -396,8 +394,6 @@ function Ritual() {
                     birthdate: birthdate || undefined,
                     system: SPREADS[spreadIdx].system,
                     pending_spread: SPREADS[spreadIdx].name,
-                    sigil: sigil ? { statement: sigil.statement, reduced: sigil.reduced, has_image: !!sigil.image_url } : null,
-                    pending_intent: intent && (!sigil || sigil.statement !== intent) ? intent : undefined,
                     vision: vision ? { prompt: vision.prompt, has_image: !!vision.image_url } : null,
                     history: history.map((h) => ({
                       question: h.question,
