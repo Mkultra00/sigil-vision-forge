@@ -264,21 +264,41 @@ function Ritual() {
                   }`}>{s.name}</button>
               ))}
             </div>
+            {SPREADS[spreadIdx].system === "astrology" && (
+              <div className="mt-4 flex flex-wrap items-center gap-2">
+                <span className="text-[10px] tracking-[0.25em] uppercase text-amber-200/60 mr-2">Timeframe</span>
+                {TIMEFRAMES.map((t) => (
+                  <button key={t.value} onClick={() => setTimeframe(t.value)}
+                    className={`px-3 py-1 rounded-full text-[11px] tracking-wide border transition ${
+                      timeframe === t.value
+                        ? "border-amber-200/60 bg-amber-100/10 text-amber-100"
+                        : "border-stone-700/60 text-stone-500 hover:border-amber-200/40"
+                    }`}>{t.label}</button>
+                ))}
+              </div>
+            )}
             <div className="mt-6">
-              <button onClick={onDraw} disabled={drawing}
+              <button onClick={onDraw} disabled={drawing || horoBusy}
                 className="px-6 py-3 rounded-full bg-amber-100/90 text-stone-900 text-sm font-medium tracking-wide hover:bg-amber-50 disabled:opacity-50">
-                {drawing ? "Drawing…" : "Draw"}
+                {SPREADS[spreadIdx].system === "astrology"
+                  ? (horoBusy ? "Reading the sky…" : "Cast the horoscope")
+                  : (drawing ? "Drawing…" : "Draw")}
               </button>
             </div>
           </section>
         )}
 
+        {horoscope && (
+          <HoroscopePanel
+            h={horoscope}
+            onSpeak={(key, text) => speak(`horo-${key}`, text)}
+            speakingKey={speakBusy?.startsWith("horo-") ? speakBusy.slice(5) : null}
+          />
+        )}
+
         {reading && (
           <section className="mt-10">
             <h2 className="text-xs tracking-[0.3em] uppercase text-amber-200/60 text-center mb-6">{reading.spread}</h2>
-            {SPREADS[spreadIdx].slug === "celtic_cross" && (
-              <CelticCrossBoard drawn={reading.drawn} />
-            )}
             {SPREADS[spreadIdx].system === "iching" && (
               <IChingBoard drawn={reading.drawn} />
             )}
