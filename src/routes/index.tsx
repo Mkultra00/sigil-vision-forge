@@ -193,10 +193,11 @@ function Ritual() {
   }
 
   async function onSigil() {
-    if (!intent.trim()) return;
+    const source = (intent.trim() || question.trim());
+    if (!source) return;
     setSigilBusy(true); setErr(null);
     try {
-      const r = await sigilFn({ data: { intent, ornament: true } });
+      const r = await sigilFn({ data: { intent: source, ornament: true } });
       setSigil({ svg: r.svg, image_url: r.image_url, statement: r.statement, reduced: r.reduced });
     } catch (e) { setErr(e instanceof Error ? e.message : String(e)); }
     finally { setSigilBusy(false); }
