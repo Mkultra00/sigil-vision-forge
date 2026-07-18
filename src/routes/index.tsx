@@ -212,10 +212,24 @@ function Ritual() {
 }
 
 function SymbolCard({ d }: { d: Drawn }) {
+  const img = tarotImageUrl(d.code);
   return (
     <div className="rounded-xl border border-amber-100/10 bg-gradient-to-b from-stone-900/60 to-black/60 p-5">
       <div className="text-[10px] tracking-[0.3em] uppercase text-amber-200/60">{d.label}</div>
       <div className="mt-1 text-xs text-stone-500 italic">{d.hint}</div>
+      {img && (
+        <div className="mt-4 flex justify-center">
+          <div className="relative rounded-md overflow-hidden border border-amber-200/20 shadow-[0_10px_40px_-15px_rgba(251,191,36,0.35)] bg-black/40" style={{ width: 160, aspectRatio: "0.58" }}>
+            <img
+              src={img}
+              alt={d.name}
+              loading="lazy"
+              className="w-full h-full object-cover transition-transform duration-700"
+              style={{ transform: d.reversed ? "rotate(180deg)" : "none" }}
+            />
+          </div>
+        </div>
+      )}
       <div className="mt-4 font-serif text-2xl text-amber-50">
         {d.name}{d.reversed && <span className="text-xs align-super text-rose-300/70 ml-1">reversed</span>}
       </div>
