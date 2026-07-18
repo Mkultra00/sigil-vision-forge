@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { castReading } from "@/lib/divination.functions";
 import { generateSigil } from "@/lib/sigil.functions";
 import { generateVision } from "@/lib/vision.functions";
+import { interpretReading } from "@/lib/interpret.functions";
 import { VoiceAgent } from "@/components/VoiceAgent";
 import { tarotImageUrl } from "@/lib/tarot-images";
 import { HexagramGlyph } from "@/components/HexagramGlyph";
@@ -61,12 +62,18 @@ function Ritual() {
   const cast = useServerFn(castReading);
   const sigilFn = useServerFn(generateSigil);
   const visionFn = useServerFn(generateVision);
+  const interpretFn = useServerFn(interpretReading);
 
   const [question, setQuestion] = useState("");
   const [spreadIdx, setSpreadIdx] = useState(0);
   const [drawing, setDrawing] = useState(false);
   const [reading, setReading] = useState<{ id: string; spread: string; drawn: Drawn[] } | null>(null);
   const [err, setErr] = useState<string | null>(null);
+  const [interpretBusy, setInterpretBusy] = useState(false);
+  const [interpretation, setInterpretation] = useState<{
+    positions: Array<{ position: number; significance: string }>;
+    synthesis: string;
+  } | null>(null);
 
   const [intent, setIntent] = useState("");
   const [sigilBusy, setSigilBusy] = useState(false);
@@ -76,11 +83,17 @@ function Ritual() {
   const [vision, setVision] = useState<{ image_url: string | null; prompt: string } | null>(null);
 
   async function onDraw() {
-    setErr(null); setDrawing(true); setReading(null); setVision(null);
+    setErr(null); setDrawing(true); setReading(null); setVision(null); setInterpretation(null);
     try {
       const s = SPREADS[spreadIdx];
       const r = await cast({ data: { system: s.system, spread_slug: s.slug, question: question || undefined } });
       setReading({ id: r.reading_id, spread: r.spread_name, drawn: r.drawn as Drawn[] });
+      // Kick off interpretation in the background.
+      setInterpretBusy(true);
+      interpretFn({ data: { reading_id: r.reading_id } })
+        .then((res) => setInterpretation(res))
+        .catch((e) => setErr(e instanceof Error ? e.message : String(e)))
+        .finally(() => setInterpretBusy(false));
     } catch (e) { setErr(e instanceof Error ? e.message : String(e)); }
     finally { setDrawing(false); }
   }
@@ -160,8 +173,25 @@ function Ritual() {
               <IChingBoard drawn={reading.drawn} />
             )}
             <div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {reading.drawn.map((d) => <SymbolCard key={`${d.position}-${d.code}`} d={d} />)}
+              {reading.drawn.map((d) => (
+                <SymbolCard
+                  key={`${d.position}-${d.code}`}
+                  d={d}
+                  significance={interpretation?.positions.find((p) => p.position === d.position)?.significance}
+                  loading={interpretBusy && !interpretation}
+                />
+              ))}
             </div>
+            {(interpretBusy || interpretation?.synthesis) && (
+              <div className="mt-8 rounded-xl border border-amber-100/10 bg-black/40 p-6 max-w-3xl mx-auto">
+                <div className="text-[10px] tracking-[0.3em] uppercase text-amber-200/60 mb-2">Synthesis</div>
+                {interpretation?.synthesis ? (
+                  <p className="text-stone-200 font-serif leading-relaxed italic">{interpretation.synthesis}</p>
+                ) : (
+                  <p className="text-stone-500 text-sm italic">The threads are being drawn together…</p>
+                )}
+              </div>
+            )}
             <div className="mt-8 text-center">
               <button onClick={onVision} disabled={visionBusy}
                 className="px-5 py-2 rounded-full border border-amber-200/40 text-amber-100 text-xs tracking-widest uppercase hover:bg-amber-100/5 disabled:opacity-50">
@@ -213,13 +243,32 @@ function Ritual() {
           )}
         </section>
 
-        {ready && <VoiceAgent />}
+        {ready && (
+          <VoiceAgent
+            context={
+              reading
+                ? {
+                    question,
+                    spread: reading.spread,
+                    drawn: reading.drawn.map((d) => ({
+                      label: d.label,
+                      name: d.name,
+                      reversed: d.reversed,
+                      keywords: d.keywords,
+                    })),
+                    positions: interpretation?.positions,
+                    synthesis: interpretation?.synthesis,
+                  }
+                : undefined
+            }
+          />
+        )}
       </div>
     </div>
   );
 }
 
-function SymbolCard({ d }: { d: Drawn }) {
+function SymbolCard({ d, significance, loading }: { d: Drawn; significance?: string; loading?: boolean }) {
   const img = tarotImageUrl(d.code);
   return (
     <div className="rounded-xl border border-amber-100/10 bg-gradient-to-b from-stone-900/60 to-black/60 p-5">
@@ -257,6 +306,16 @@ function SymbolCard({ d }: { d: Drawn }) {
       {d.changing?.length ? (
         <div className="mt-3 text-xs text-amber-200/70">Changing lines: {d.changing.map((n) => n + 1).join(", ")}</div>
       ) : null}
+      <div className="mt-4 pt-4 border-t border-amber-100/10">
+        <div className="text-[10px] tracking-[0.3em] uppercase text-amber-200/60 mb-1">Significance</div>
+        {significance ? (
+          <p className="text-sm text-amber-50/90 font-serif italic leading-relaxed">{significance}</p>
+        ) : loading ? (
+          <p className="text-xs text-stone-500 italic">Listening for meaning…</p>
+        ) : (
+          <p className="text-xs text-stone-600 italic">—</p>
+        )}
+      </div>
     </div>
   );
 }
