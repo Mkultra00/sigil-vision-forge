@@ -394,20 +394,35 @@ function Ritual() {
             </div>
           )}
           {sigil && (
-            <div className="mt-6 grid gap-6 md:grid-cols-2 items-center">
-              <div className="flex justify-center">
-                {sigil.image_url ? (
-                  <img src={sigil.image_url} alt="Sigil" className="rounded-lg max-w-xs border border-amber-100/20" />
-                ) : (
-                  <div className="rounded-lg border border-amber-100/20 p-2 bg-black/40"
+            <div className="mt-6 space-y-6">
+              <div className="grid gap-6 md:grid-cols-2 items-start">
+                <div className="flex flex-col items-center gap-2">
+                  <div className="text-[10px] tracking-[0.3em] uppercase text-amber-200/50">Symbolic seal</div>
+                  <div className="rounded-lg border border-amber-100/20 p-2 bg-black/40 w-full max-w-sm"
                     dangerouslySetInnerHTML={{ __html: sigil.svg }} />
+                </div>
+                {sigil.image_url && (
+                  <div className="flex flex-col items-center gap-2">
+                    <div className="text-[10px] tracking-[0.3em] uppercase text-amber-200/50">Adorned</div>
+                    <img src={sigil.image_url} alt="Sigil" className="rounded-lg w-full max-w-sm border border-amber-100/20" />
+                  </div>
                 )}
               </div>
-              <div className="text-sm text-stone-300">
-                <div className="text-xs tracking-widest uppercase text-amber-200/60 mb-1">Statement</div>
-                <p className="font-serif italic text-amber-50/90">{sigil.statement}</p>
-                <div className="mt-4 text-xs tracking-widest uppercase text-amber-200/60 mb-1">Reduced letters</div>
-                <p className="font-mono tracking-widest text-amber-100/80">{sigil.reduced}</p>
+              <div className="rounded-xl border border-amber-100/10 bg-black/40 p-5 space-y-4">
+                <div>
+                  <div className="text-[10px] tracking-[0.3em] uppercase text-amber-200/60 mb-1">Statement of will</div>
+                  <p className="font-serif italic text-lg text-amber-50/95 leading-snug">{sigil.statement}</p>
+                </div>
+                <div>
+                  <div className="text-[10px] tracking-[0.3em] uppercase text-amber-200/60 mb-1">Reduced letters — the bound glyph</div>
+                  <div className="flex flex-wrap gap-2">
+                    {[...sigil.reduced].map((ch, i) => (
+                      <span key={i} className="inline-flex items-center justify-center h-9 w-9 rounded border border-amber-200/30 bg-amber-100/5 font-serif text-amber-100 text-lg">
+                        {ch}
+                      </span>
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
           )}
