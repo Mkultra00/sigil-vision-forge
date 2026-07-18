@@ -77,14 +77,18 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
+      { title: "Shaman — Voice-first divination" },
+      { name: "description", content: "A quiet ritual space for tarot, I Ching, sigils, and visions." },
       { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { property: "og:title", content: "Shaman — Voice-first divination" },
+      { property: "og:description", content: "A quiet ritual space for tarot, I Ching, sigils, and visions." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:title", content: "Shaman — Voice-first divination" },
+      { name: "twitter:description", content: "A quiet ritual space for tarot, I Ching, sigils, and visions." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/a652e55a-0e82-4410-8a5d-5e51343cc2d0/id-preview-1a436147--ed96d1f4-3ffa-4c68-a4d3-8ec71c0f7fdb.lovable.app-1784401769286.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/a652e55a-0e82-4410-8a5d-5e51343cc2d0/id-preview-1a436147--ed96d1f4-3ffa-4c68-a4d3-8ec71c0f7fdb.lovable.app-1784401769286.png" },
     ],
     links: [
       {
