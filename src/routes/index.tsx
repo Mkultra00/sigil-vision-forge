@@ -419,6 +419,15 @@ function Ritual() {
                         drawn: h.drawn.map((d) => ({ label: d.label, name: d.name, reversed: d.reversed })),
                         synthesis: h.synthesis,
                       })),
+                    horoscope: horoscope ? {
+                      timeframe: horoscope.timeframe_label,
+                      natal_sun: horoscope.natal_sun ? { name: horoscope.natal_sun.name, element: horoscope.natal_sun.element } : null,
+                      transit_sun: { name: horoscope.transit_sun.name, element: horoscope.transit_sun.element },
+                      transit_moon: horoscope.transit_moon ? { name: horoscope.transit_moon.name, element: horoscope.transit_moon.element } : undefined,
+                      headline: horoscope.headline,
+                      sections: horoscope.sections?.map((s) => ({ label: s.label, text: s.text })),
+                      synthesis: horoscope.synthesis,
+                    } : null,
                   }
                 : {
                     question: question || undefined,
@@ -435,6 +444,15 @@ function Ritual() {
                       drawn: h.drawn.map((d) => ({ label: d.label, name: d.name, reversed: d.reversed })),
                       synthesis: h.synthesis,
                     })),
+                    horoscope: horoscope ? {
+                      timeframe: horoscope.timeframe_label,
+                      natal_sun: horoscope.natal_sun ? { name: horoscope.natal_sun.name, element: horoscope.natal_sun.element } : null,
+                      transit_sun: { name: horoscope.transit_sun.name, element: horoscope.transit_sun.element },
+                      transit_moon: horoscope.transit_moon ? { name: horoscope.transit_moon.name, element: horoscope.transit_moon.element } : undefined,
+                      headline: horoscope.headline,
+                      sections: horoscope.sections?.map((s) => ({ label: s.label, text: s.text })),
+                      synthesis: horoscope.synthesis,
+                    } : null,
                   }
             }
           />
