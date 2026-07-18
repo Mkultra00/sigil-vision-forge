@@ -311,6 +311,8 @@ function Ritual() {
                     })),
                     positions: interpretation?.positions,
                     synthesis: interpretation?.synthesis,
+                    sigil: sigil ? { statement: sigil.statement, reduced: sigil.reduced, has_image: !!sigil.image_url } : null,
+                    vision: vision ? { prompt: vision.prompt, has_image: !!vision.image_url } : null,
                     history: history
                       .filter((h) => h.id !== reading.id)
                       .map((h) => ({
@@ -322,6 +324,8 @@ function Ritual() {
                       })),
                   }
                 : {
+                    sigil: sigil ? { statement: sigil.statement, reduced: sigil.reduced, has_image: !!sigil.image_url } : null,
+                    vision: vision ? { prompt: vision.prompt, has_image: !!vision.image_url } : null,
                     history: history.map((h) => ({
                       question: h.question,
                       spread: h.spread,
