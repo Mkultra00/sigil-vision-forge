@@ -7,6 +7,7 @@ import { generateSigil } from "@/lib/sigil.functions";
 import { generateVision } from "@/lib/vision.functions";
 import { VoiceAgent } from "@/components/VoiceAgent";
 import { tarotImageUrl } from "@/lib/tarot-images";
+import { HexagramGlyph } from "@/components/HexagramGlyph";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -30,6 +31,7 @@ type Drawn = {
   text: string;
   reversed: boolean;
   changing?: number[];
+  lines?: number[];
 };
 
 function useAnonSession() {
@@ -151,7 +153,13 @@ function Ritual() {
         {reading && (
           <section className="mt-10">
             <h2 className="text-xs tracking-[0.3em] uppercase text-amber-200/60 text-center mb-6">{reading.spread}</h2>
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {SPREADS[spreadIdx].slug === "celtic_cross" && (
+              <CelticCrossBoard drawn={reading.drawn} />
+            )}
+            {SPREADS[spreadIdx].system === "iching" && (
+              <IChingBoard drawn={reading.drawn} />
+            )}
+            <div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {reading.drawn.map((d) => <SymbolCard key={`${d.position}-${d.code}`} d={d} />)}
             </div>
             <div className="mt-8 text-center">
