@@ -197,6 +197,23 @@ function Ritual() {
 
         {ready && (
           <section className="rounded-2xl border border-amber-100/10 bg-black/30 backdrop-blur p-6 md:p-8">
+            <div className="mb-6 flex flex-wrap items-center gap-3">
+              <label className="text-[10px] tracking-[0.25em] uppercase text-amber-200/60">Birthdate (optional)</label>
+              <input
+                type="date"
+                value={birthdate}
+                onChange={(e) => setBirthdate(e.target.value)}
+                className="bg-transparent border-b border-amber-100/20 focus:border-amber-200/60 outline-none py-1 text-sm text-amber-50 [color-scheme:dark]"
+              />
+              {birthdate && (
+                <button
+                  onClick={() => setBirthdate("")}
+                  className="text-[10px] tracking-widest uppercase text-stone-500 hover:text-rose-300/80"
+                >
+                  clear
+                </button>
+              )}
+            </div>
             <label className="block text-xs tracking-widest uppercase text-amber-200/70 mb-2">Your question</label>
             <textarea
               value={question} onChange={(e) => setQuestion(e.target.value)}
