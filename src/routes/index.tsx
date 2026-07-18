@@ -628,6 +628,20 @@ function HoroscopePanel({
   );
 }
 
+function FocusSigil({ statement, seedText, size = 320 }: { statement: string; seedText: string; size?: number }) {
+  const reduced = reduceLetters(seedText || statement);
+  const svg = buildSigilSvg(reduced, size, seedText || statement);
+  return (
+    <div
+      className="rounded-full overflow-hidden drop-shadow-[0_0_40px_rgba(217,180,110,0.25)]"
+      style={{ width: size, height: size }}
+      role="img"
+      aria-label="Focus sigil"
+      dangerouslySetInnerHTML={{ __html: svg }}
+    />
+  );
+}
+
 function SpellPanel({
   intent,
   setIntent,
