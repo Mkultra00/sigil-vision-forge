@@ -5,10 +5,13 @@ export type VoiceContext = {
   question?: string;
   birthdate?: string;
   spread?: string;
-  drawn?: Array<{ label: string; name: string; reversed?: boolean; keywords?: string[] }>;
+  system?: string;
+  drawn?: Array<{ label: string; hint?: string; name: string; reversed?: boolean; keywords?: string[]; text?: string; changing?: number[] }>;
   synthesis?: string;
   positions?: Array<{ position: number; significance: string }>;
   sigil?: { statement: string; reduced: string; has_image: boolean } | null;
+  pending_intent?: string;
+  pending_spread?: string;
   vision?: { prompt: string; has_image: boolean } | null;
   history?: Array<{
     question?: string;
@@ -44,7 +47,13 @@ function summarize(ctx?: VoiceContext): string {
     : "";
   if (!ctx || !ctx.drawn?.length) return `The seeker has not yet drawn a reading.${historyBlock}`;
   const lines = ctx.drawn
-    .map((d) => `• ${d.label}: ${d.name}${d.reversed ? " (reversed)" : ""}${d.keywords?.length ? ` — ${d.keywords.slice(0, 3).join(", ")}` : ""}`)
+    .map((d) => {
+      const kw = d.keywords?.length ? ` — keywords: ${d.keywords.slice(0, 5).join(", ")}` : "";
+      const chg = d.changing?.length ? ` — changing lines: ${d.changing.map((n) => n + 1).join(", ")}` : "";
+      const meaning = d.text ? `\n   meaning: ${d.text}` : "";
+      const hint = d.hint ? ` (${d.hint})` : "";
+      return `• ${d.label}${hint}: ${d.name}${d.reversed ? " (reversed)" : ""}${kw}${chg}${meaning}`;
+    })
     .join("\n");
   const posNotes = ctx.positions?.length
     ? "\nPer-position significance:\n" +
@@ -53,15 +62,19 @@ function summarize(ctx?: VoiceContext): string {
   const sigilBlock = ctx.sigil
     ? `\n\nActive sigil on the altar — intent: "${ctx.sigil.statement}"; reduced glyph-letters: ${ctx.sigil.reduced}${ctx.sigil.has_image ? " (an ornamented sigil image is visible to the seeker)" : ""}.`
     : "";
+  const pendingBlock = [
+    ctx.pending_intent ? `\n\nSeeker is currently typing a sigil intent (not yet bound): "${ctx.pending_intent}"` : "",
+    !ctx.drawn?.length && ctx.pending_spread ? `\nSpread currently selected on the page: ${ctx.pending_spread}` : "",
+  ].join("");
   const visionBlock = ctx.vision
     ? `\n\nA summoned vision is present${ctx.vision.has_image ? " (image rendered)" : ""} — its prompt: ${ctx.vision.prompt}`
     : "";
   const birthLine = ctx.birthdate ? `\nSeeker's birthdate: ${ctx.birthdate}.` : "";
   return `The seeker asked: ${ctx.question || "(unspoken)"}.${birthLine}
-Spread: ${ctx.spread ?? "unknown"}.
+System: ${ctx.system ?? "unknown"}. Spread: ${ctx.spread ?? "unknown"}.
 Cards drawn:
 ${lines}${posNotes}
-${ctx.synthesis ? `\nSynthesis so far: ${ctx.synthesis}` : ""}${sigilBlock}${visionBlock}${historyBlock}
+${ctx.synthesis ? `\nSynthesis so far: ${ctx.synthesis}` : ""}${sigilBlock}${pendingBlock}${visionBlock}${historyBlock}
 
 When you speak, weave the cards, the sigil, and the vision together into one synthesis — explain how they reinforce or complicate one another for the seeker.`;
 }
