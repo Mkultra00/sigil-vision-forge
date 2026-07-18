@@ -13,6 +13,15 @@ export type VoiceContext = {
   pending_intent?: string;
   pending_spread?: string;
   vision?: { prompt: string; has_image: boolean } | null;
+  horoscope?: {
+    timeframe: string;
+    natal_sun?: { name: string; element: string } | null;
+    transit_sun: { name: string; element: string };
+    transit_moon?: { name: string; element: string };
+    headline?: string;
+    sections?: Array<{ label: string; text: string }>;
+    synthesis?: string;
+  } | null;
   history?: Array<{
     question?: string;
     spread?: string;
