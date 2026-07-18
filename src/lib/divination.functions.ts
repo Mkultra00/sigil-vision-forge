@@ -48,6 +48,7 @@ export const castReading = createServerFn({ method: "POST" })
       text: string;
       reversed: boolean;
       changing?: number[]; // for iching hexagram lines
+      lines?: number[]; // 6..9 bottom→top for iching
     };
     const drawn: Drawn[] = [];
 
@@ -106,6 +107,7 @@ export const castReading = createServerFn({ method: "POST" })
         text: hex.upright_text,
         reversed: false,
         changing,
+        lines,
       });
       if (changing.length) {
         const relating = primary.map((b, i) => (changing.includes(i) ? 1 - b : b));
@@ -126,6 +128,7 @@ export const castReading = createServerFn({ method: "POST" })
             keywords: rel.keywords ?? [],
             text: rel.upright_text,
             reversed: false,
+            lines: relating.map((b) => (b === 1 ? 7 : 8)),
           });
         }
       }
