@@ -35,6 +35,20 @@ type Drawn = {
   lines?: number[];
 };
 
+type PastReading = {
+  id: string;
+  question: string;
+  system: "tarot" | "iching";
+  spread: string;
+  drawn: Drawn[];
+  synthesis?: string;
+  positions?: Array<{ position: number; significance: string }>;
+  at: number;
+};
+
+const HISTORY_KEY = "shaman.history.v1";
+const HISTORY_MAX = 8;
+
 function useAnonSession() {
   const [ready, setReady] = useState(false);
   useEffect(() => {
@@ -82,6 +96,36 @@ function Ritual() {
   const [visionBusy, setVisionBusy] = useState(false);
   const [vision, setVision] = useState<{ image_url: string | null; prompt: string } | null>(null);
 
+  const [history, setHistory] = useState<PastReading[]>(() => {
+    if (typeof window === "undefined") return [];
+    try {
+      const raw = window.localStorage.getItem(HISTORY_KEY);
+      return raw ? (JSON.parse(raw) as PastReading[]) : [];
+    } catch { return []; }
+  });
+  useEffect(() => {
+    try { window.localStorage.setItem(HISTORY_KEY, JSON.stringify(history)); } catch { /* noop */ }
+  }, [history]);
+
+  // When an interpretation lands for the current reading, fold it into history.
+  useEffect(() => {
+    if (!reading || !interpretation) return;
+    setHistory((prev) => {
+      const withoutCurrent = prev.filter((h) => h.id !== reading.id);
+      const entry: PastReading = {
+        id: reading.id,
+        question,
+        system: SPREADS[spreadIdx].system,
+        spread: reading.spread,
+        drawn: reading.drawn,
+        synthesis: interpretation.synthesis,
+        positions: interpretation.positions,
+        at: Date.now(),
+      };
+      return [...withoutCurrent, entry].slice(-HISTORY_MAX);
+    });
+  }, [reading, interpretation, question, spreadIdx]);
+
   async function onDraw() {
     setErr(null); setDrawing(true); setReading(null); setVision(null); setInterpretation(null);
     try {
@@ -90,7 +134,16 @@ function Ritual() {
       setReading({ id: r.reading_id, spread: r.spread_name, drawn: r.drawn as Drawn[] });
       // Kick off interpretation in the background.
       setInterpretBusy(true);
-      interpretFn({ data: { reading_id: r.reading_id } })
+      const priorForLLM = history.filter((h) => h.id !== r.reading_id).map((h) => ({
+        question: h.question || undefined,
+        system: h.system,
+        spread: h.spread,
+        drawn: h.drawn.map((d) => ({
+          label: d.label, name: d.name, reversed: d.reversed, keywords: d.keywords,
+        })),
+        synthesis: h.synthesis,
+      }));
+      interpretFn({ data: { reading_id: r.reading_id, history: priorForLLM } })
         .then((res) => setInterpretation(res))
         .catch((e) => setErr(e instanceof Error ? e.message : String(e)))
         .finally(() => setInterpretBusy(false));
@@ -258,10 +311,62 @@ function Ritual() {
                     })),
                     positions: interpretation?.positions,
                     synthesis: interpretation?.synthesis,
+                    history: history
+                      .filter((h) => h.id !== reading.id)
+                      .map((h) => ({
+                        question: h.question,
+                        spread: h.spread,
+                        system: h.system,
+                        drawn: h.drawn.map((d) => ({ label: d.label, name: d.name, reversed: d.reversed })),
+                        synthesis: h.synthesis,
+                      })),
                   }
-                : undefined
+                : {
+                    history: history.map((h) => ({
+                      question: h.question,
+                      spread: h.spread,
+                      system: h.system,
+                      drawn: h.drawn.map((d) => ({ label: d.label, name: d.name, reversed: d.reversed })),
+                      synthesis: h.synthesis,
+                    })),
+                  }
             }
           />
+        )}
+
+        {history.length > 0 && (
+          <section className="mt-16 rounded-2xl border border-amber-100/10 bg-black/20 backdrop-blur p-6 md:p-8">
+            <div className="flex items-center justify-between mb-4">
+              <div className="text-xs tracking-[0.3em] uppercase text-amber-200/60">The arc so far</div>
+              <button
+                onClick={() => { setHistory([]); }}
+                className="text-[10px] tracking-widest uppercase text-stone-500 hover:text-rose-300/80"
+              >
+                clear
+              </button>
+            </div>
+            <ol className="space-y-4">
+              {history.slice().reverse().map((h, idx) => (
+                <li key={h.id} className="border-l border-amber-200/20 pl-4">
+                  <div className="text-[10px] tracking-widest uppercase text-amber-200/50">
+                    {history.length - idx}. {h.system} · {h.spread}
+                  </div>
+                  <div className="text-sm text-amber-50/90 font-serif italic mt-1">
+                    {h.question || "(unspoken)"}
+                  </div>
+                  <div className="mt-1 text-xs text-stone-400">
+                    {h.drawn.map((d) => `${d.name}${d.reversed ? " ↺" : ""}`).join(" · ")}
+                  </div>
+                  {h.synthesis && (
+                    <p className="mt-2 text-xs text-stone-300/80 leading-relaxed">{h.synthesis}</p>
+                  )}
+                </li>
+              ))}
+            </ol>
+            <p className="mt-4 text-[11px] text-stone-500 italic">
+              Each new draw is read against these. Clear to begin a fresh arc.
+            </p>
+          </section>
         )}
       </div>
     </div>
