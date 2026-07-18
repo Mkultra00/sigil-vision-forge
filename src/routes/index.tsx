@@ -6,6 +6,7 @@ import { castReading } from "@/lib/divination.functions";
 import { generateSigil } from "@/lib/sigil.functions";
 import { generateVision } from "@/lib/vision.functions";
 import { VoiceAgent } from "@/components/VoiceAgent";
+import { tarotImageUrl } from "@/lib/tarot-images";
 
 export const Route = createFileRoute("/")({
   head: () => ({
