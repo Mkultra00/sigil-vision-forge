@@ -80,6 +80,13 @@ function Ritual() {
 
   const [question, setQuestion] = useState("");
   const [spreadIdx, setSpreadIdx] = useState(0);
+  const [birthdate, setBirthdate] = useState<string>(() => {
+    if (typeof window === "undefined") return "";
+    try { return window.localStorage.getItem("shaman.birthdate.v1") ?? ""; } catch { return ""; }
+  });
+  useEffect(() => {
+    try { window.localStorage.setItem("shaman.birthdate.v1", birthdate); } catch { /* noop */ }
+  }, [birthdate]);
   const [drawing, setDrawing] = useState(false);
   const [reading, setReading] = useState<{ id: string; spread: string; drawn: Drawn[] } | null>(null);
   const [err, setErr] = useState<string | null>(null);
@@ -143,7 +150,7 @@ function Ritual() {
         })),
         synthesis: h.synthesis,
       }));
-      interpretFn({ data: { reading_id: r.reading_id, history: priorForLLM } })
+      interpretFn({ data: { reading_id: r.reading_id, history: priorForLLM, birthdate: birthdate || undefined } })
         .then((res) => setInterpretation(res))
         .catch((e) => setErr(e instanceof Error ? e.message : String(e)))
         .finally(() => setInterpretBusy(false));
