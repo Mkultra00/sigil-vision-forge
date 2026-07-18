@@ -7,6 +7,13 @@ export type VoiceContext = {
   drawn?: Array<{ label: string; name: string; reversed?: boolean; keywords?: string[] }>;
   synthesis?: string;
   positions?: Array<{ position: number; significance: string }>;
+  history?: Array<{
+    question?: string;
+    spread?: string;
+    system?: string;
+    drawn: Array<{ label: string; name: string; reversed?: boolean }>;
+    synthesis?: string;
+  }>;
 };
 
 export function VoiceAgent({ context }: { context?: VoiceContext }) {
@@ -18,7 +25,16 @@ export function VoiceAgent({ context }: { context?: VoiceContext }) {
 }
 
 function summarize(ctx?: VoiceContext): string {
-  if (!ctx || !ctx.drawn?.length) return "The seeker has not yet drawn a reading.";
+  const historyBlock = ctx?.history?.length
+    ? "\n\nPrior readings this session (oldest first):\n" +
+      ctx.history
+        .map((h, i) => {
+          const cards = h.drawn.map((d) => `${d.label}: ${d.name}${d.reversed ? " (rev)" : ""}`).join("; ");
+          return `(${i + 1}) [${h.system ?? "?"}${h.spread ? ` · ${h.spread}` : ""}] Q: ${h.question || "(unspoken)"} — ${cards}${h.synthesis ? ` — ${h.synthesis}` : ""}`;
+        })
+        .join("\n")
+    : "";
+  if (!ctx || !ctx.drawn?.length) return `The seeker has not yet drawn a reading.${historyBlock}`;
   const lines = ctx.drawn
     .map((d) => `• ${d.label}: ${d.name}${d.reversed ? " (reversed)" : ""}${d.keywords?.length ? ` — ${d.keywords.slice(0, 3).join(", ")}` : ""}`)
     .join("\n");
@@ -30,7 +46,7 @@ function summarize(ctx?: VoiceContext): string {
 Spread: ${ctx.spread ?? "unknown"}.
 Cards drawn:
 ${lines}${posNotes}
-${ctx.synthesis ? `\nSynthesis so far: ${ctx.synthesis}` : ""}`;
+${ctx.synthesis ? `\nSynthesis so far: ${ctx.synthesis}` : ""}${historyBlock}`;
 }
 
 function VoiceAgentInner({ context }: { context?: VoiceContext }) {
