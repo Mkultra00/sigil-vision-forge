@@ -24,8 +24,8 @@ export function buildSigilSvg(reduced: string, size = 480): string {
 
   const points = [...letters].map(idx);
   const path = points
-    .map(([], i) => {
-      const [x, y] = pt(points[i]);
+    .map((p, i) => {
+      const [x, y] = pt(p);
       return `${i === 0 ? "M" : "L"} ${x.toFixed(1)} ${y.toFixed(1)}`;
     })
     .join(" ");
