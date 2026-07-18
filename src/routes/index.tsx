@@ -677,7 +677,7 @@ function SpellPanel({
       {spell && (
         <div className="mt-8 grid gap-8 md:grid-cols-[auto,1fr] items-start">
           <div className="flex justify-center md:justify-start">
-            <Mandala seed={spell.mandala_seed} size={320} />
+            <FocusSigil statement={`${spell.mantra} ${spell.affirmation}`} seedText={spell.mandala_seed} size={320} />
           </div>
           <div className="space-y-5">
             <div>
