@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { castReading } from "@/lib/divination.functions";
 import { generateSigil } from "@/lib/sigil.functions";
 import { generateVision } from "@/lib/vision.functions";
+import { VoiceAgent } from "@/components/VoiceAgent";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -202,6 +203,8 @@ function Ritual() {
             </div>
           )}
         </section>
+
+        {ready && <VoiceAgent />}
       </div>
     </div>
   );
