@@ -19,7 +19,7 @@ export const generateSigil = createServerFn({ method: "POST" })
       ? data.intent
       : `IT IS MY WILL ${data.intent.trim()}`;
     const reduced = reduceLetters(statement);
-    const svg = buildSigilSvg(reduced, 512);
+    const svg = buildSigilSvg(reduced, 512, statement);
 
     const svgPath = `${userId}/${crypto.randomUUID()}.svg`;
     const svgUpload = await supabase.storage
