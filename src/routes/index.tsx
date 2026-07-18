@@ -4,12 +4,13 @@ import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { castReading } from "@/lib/divination.functions";
 import { castHoroscope, type Horoscope } from "@/lib/astrology.functions";
-import { generateVision } from "@/lib/vision.functions";
+import { castSpell, type Spell } from "@/lib/spell.functions";
 import { interpretReading } from "@/lib/interpret.functions";
 import { VoiceAgent, type VoiceApi } from "@/components/VoiceAgent";
 import { tarotImageUrl } from "@/lib/tarot-images";
 import { HexagramGlyph } from "@/components/HexagramGlyph";
 import { ZodiacWheel } from "@/components/ZodiacWheel";
+import { Mandala } from "@/components/Mandala";
 import shamanAvatar from "@/assets/shaman-avatar.jpg";
 
 export const Route = createFileRoute("/")({
@@ -85,7 +86,7 @@ function Ritual() {
   const ready = useAnonSession();
   const cast = useServerFn(castReading);
   const horoscopeFn = useServerFn(castHoroscope);
-  const visionFn = useServerFn(generateVision);
+  const spellFn = useServerFn(castSpell);
   const interpretFn = useServerFn(interpretReading);
 
   const [question, setQuestion] = useState("");
@@ -109,8 +110,9 @@ function Ritual() {
     synthesis: string;
   } | null>(null);
 
-  const [visionBusy, setVisionBusy] = useState(false);
-  const [vision, setVision] = useState<{ image_url: string | null; prompt: string } | null>(null);
+  const [spellBusy, setSpellBusy] = useState(false);
+  const [spell, setSpell] = useState<Spell | null>(null);
+  const [spellIntent, setSpellIntent] = useState("");
 
   const voiceRef = useRef<VoiceApi | null>(null);
   const [speakBusy, setSpeakBusy] = useState<string | null>(null);
@@ -154,7 +156,7 @@ function Ritual() {
   }, [reading, interpretation, question, spreadIdx]);
 
   async function onDraw() {
-    setErr(null); setDrawing(true); setReading(null); setVision(null); setInterpretation(null); setHoroscope(null);
+    setErr(null); setDrawing(true); setReading(null); setSpell(null); setInterpretation(null); setHoroscope(null);
     try {
       const s = SPREADS[spreadIdx];
       if (s.system === "astrology") {
@@ -186,14 +188,26 @@ function Ritual() {
     finally { setDrawing(false); }
   }
 
-  async function onVision() {
-    if (!reading) return;
-    setVisionBusy(true); setErr(null);
+  async function onCastSpell() {
+    setSpellBusy(true); setErr(null);
     try {
-      const r = await visionFn({ data: { reading_id: reading.id } });
-      setVision({ image_url: r.image_url, prompt: r.prompt });
+      const contextSummary = [
+        interpretation?.synthesis ? `Synthesis: ${interpretation.synthesis}` : "",
+        horoscope?.synthesis ? `Horoscope synthesis: ${horoscope.synthesis}` : "",
+        reading ? `Symbols: ${reading.drawn.map((d) => `${d.name}${d.reversed ? " (rev)" : ""}`).join(", ")}` : "",
+      ].filter(Boolean).join("\n");
+      const s = await spellFn({ data: {
+        question: question || undefined,
+        intent: spellIntent || undefined,
+        context_summary: contextSummary || undefined,
+        birthdate: birthdate || undefined,
+      }});
+      setSpell(s);
+      // auto-speak the mantra + affirmation
+      const text = `Repeat this mantra with me: ${s.mantra}. And hold this truth: ${s.affirmation}. ${s.focus_instructions}`;
+      void speak("spell", text);
     } catch (e) { setErr(e instanceof Error ? e.message : String(e)); }
-    finally { setVisionBusy(false); }
+    finally { setSpellBusy(false); }
   }
 
   return (
@@ -217,8 +231,8 @@ function Ritual() {
           <div className="text-xs tracking-[0.4em] text-amber-200/60 uppercase">Shaman</div>
           <h1 className="mt-3 text-4xl md:text-5xl font-serif text-amber-50">A Quiet Ritual</h1>
           <p className="mt-4 text-stone-300/80 max-w-xl mx-auto text-sm leading-relaxed">
-            Ask a question. Draw the symbols. Watch them speak. Turn intent into a sigil.
-            End with a vision.
+            Ask a question. Draw the symbols. Let the Shaman speak. End by casting a manifestation spell —
+            a mantra and mandala to sit with.
           </p>
         </header>
 
@@ -332,20 +346,20 @@ function Ritual() {
                 )}
               </div>
             )}
-            <div className="mt-8 text-center">
-              <button onClick={onVision} disabled={visionBusy}
-                className="px-5 py-2 rounded-full border border-amber-200/40 text-amber-100 text-xs tracking-widest uppercase hover:bg-amber-100/5 disabled:opacity-50">
-                {visionBusy ? "The vision is forming…" : "Summon a vision"}
-              </button>
-            </div>
-            {vision?.image_url && (
-              <div className="mt-8 flex flex-col items-center">
-                <img src={vision.image_url} alt="Vision"
-                  className="rounded-lg max-w-md border border-amber-100/20 shadow-2xl" />
-                <p className="mt-3 text-xs text-stone-400 max-w-md text-center italic">{vision.prompt}</p>
-              </div>
-            )}
           </section>
+        )}
+
+        {ready && (
+          <SpellPanel
+            intent={spellIntent}
+            setIntent={setSpellIntent}
+            question={question}
+            busy={spellBusy}
+            spell={spell}
+            onCast={onCastSpell}
+            onSpeak={(key: string, text: string) => speak(key, text)}
+            speakingKey={speakBusy}
+          />
         )}
 
         {ready && (
@@ -369,7 +383,7 @@ function Ritual() {
                     })),
                     positions: interpretation?.positions,
                     synthesis: interpretation?.synthesis,
-                    vision: vision ? { prompt: vision.prompt, has_image: !!vision.image_url } : null,
+                    spell: spell ? { mantra: spell.mantra, affirmation: spell.affirmation, mandala_seed: spell.mandala_seed } : null,
                     history: history
                       .filter((h) => h.id !== reading.id)
                       .map((h) => ({
@@ -394,7 +408,7 @@ function Ritual() {
                     birthdate: birthdate || undefined,
                     system: SPREADS[spreadIdx].system,
                     pending_spread: SPREADS[spreadIdx].name,
-                    vision: vision ? { prompt: vision.prompt, has_image: !!vision.image_url } : null,
+                    spell: spell ? { mantra: spell.mantra, affirmation: spell.affirmation, mandala_seed: spell.mandala_seed } : null,
                     history: history.map((h) => ({
                       question: h.question,
                       spread: h.spread,
@@ -610,6 +624,98 @@ function HoroscopePanel({
           )}
         </div>
       </div>
+    </section>
+  );
+}
+
+function SpellPanel({
+  intent,
+  setIntent,
+  question,
+  busy,
+  spell,
+  onCast,
+  onSpeak,
+  speakingKey,
+}: {
+  intent: string;
+  setIntent: (v: string) => void;
+  question: string;
+  busy: boolean;
+  spell: Spell | null;
+  onCast: () => void;
+  onSpeak: (key: string, text: string) => void;
+  speakingKey: string | null;
+}) {
+  const focusHint = intent.trim() || question.trim() || "";
+  return (
+    <section className="mt-16 rounded-2xl border border-amber-100/10 bg-black/30 backdrop-blur p-6 md:p-8">
+      <div className="text-xs tracking-[0.3em] uppercase text-amber-200/60 mb-3">Cast a spell</div>
+      <p className="text-sm text-stone-400 mb-4">
+        A manifestation spell: a mantra to repeat, an affirmation to hold, and a mandala to sit with.
+        The Shaman will speak it aloud.
+      </p>
+      <label className="block text-[10px] tracking-[0.25em] uppercase text-amber-200/60 mb-2">
+        Intent for the spell {question && !intent.trim() && <span className="text-stone-500 italic normal-case tracking-normal">— defaulting to your question</span>}
+      </label>
+      <input
+        value={intent}
+        onChange={(e) => setIntent(e.target.value)}
+        placeholder={question || "I call in…"}
+        className="w-full bg-transparent border-b border-amber-100/20 focus:border-amber-200/60 outline-none py-2 text-base text-amber-50 placeholder:text-stone-500 font-serif"
+      />
+      <div className="mt-5">
+        <button
+          onClick={onCast}
+          disabled={busy || !focusHint}
+          className="px-6 py-3 rounded-full bg-amber-100/90 text-stone-900 text-sm font-medium tracking-wide hover:bg-amber-50 disabled:opacity-50"
+        >
+          {busy ? "Weaving the spell…" : "Cast the spell"}
+        </button>
+      </div>
+
+      {spell && (
+        <div className="mt-8 grid gap-8 md:grid-cols-[auto,1fr] items-start">
+          <div className="flex justify-center md:justify-start">
+            <Mandala seed={spell.mandala_seed} size={320} />
+          </div>
+          <div className="space-y-5">
+            <div>
+              <div className="text-[10px] tracking-[0.3em] uppercase text-amber-200/60 mb-2">Mantra</div>
+              <p className="font-serif text-2xl text-amber-50 italic leading-snug">{spell.mantra}</p>
+              <button
+                onClick={() => onSpeak("mantra", `Repeat this mantra with me, slowly, three times: ${spell.mantra}`)}
+                disabled={speakingKey === "mantra"}
+                className="mt-3 text-[10px] tracking-[0.25em] uppercase text-amber-200/80 border border-amber-200/30 rounded-full px-3 py-1 hover:bg-amber-100/5 disabled:opacity-50"
+              >
+                {speakingKey === "mantra" ? "Speaking…" : "Chant it"}
+              </button>
+            </div>
+            <div>
+              <div className="text-[10px] tracking-[0.3em] uppercase text-amber-200/60 mb-2">Affirmation</div>
+              <p className="text-stone-200 font-serif leading-relaxed">{spell.affirmation}</p>
+              <button
+                onClick={() => onSpeak("affirmation", spell.affirmation)}
+                disabled={speakingKey === "affirmation"}
+                className="mt-3 text-[10px] tracking-[0.25em] uppercase text-amber-200/80 border border-amber-200/30 rounded-full px-3 py-1 hover:bg-amber-100/5 disabled:opacity-50"
+              >
+                {speakingKey === "affirmation" ? "Speaking…" : "Hear it spoken"}
+              </button>
+            </div>
+            <div>
+              <div className="text-[10px] tracking-[0.3em] uppercase text-amber-200/60 mb-2">Focus</div>
+              <p className="text-sm text-stone-300 leading-relaxed">{spell.focus_instructions}</p>
+              <button
+                onClick={() => onSpeak("focus", `${spell.focus_instructions} The mantra is: ${spell.mantra}.`)}
+                disabled={speakingKey === "focus"}
+                className="mt-3 text-[10px] tracking-[0.25em] uppercase text-amber-200/80 border border-amber-200/30 rounded-full px-3 py-1 hover:bg-amber-100/5 disabled:opacity-50"
+              >
+                {speakingKey === "focus" ? "Speaking…" : "Guide me"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 }
