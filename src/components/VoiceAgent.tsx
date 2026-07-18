@@ -13,6 +13,15 @@ export type VoiceContext = {
   pending_intent?: string;
   pending_spread?: string;
   vision?: { prompt: string; has_image: boolean } | null;
+  horoscope?: {
+    timeframe: string;
+    natal_sun?: { name: string; element: string } | null;
+    transit_sun: { name: string; element: string };
+    transit_moon?: { name: string; element: string };
+    headline?: string;
+    sections?: Array<{ label: string; text: string }>;
+    synthesis?: string;
+  } | null;
   history?: Array<{
     question?: string;
     spread?: string;
@@ -45,7 +54,23 @@ function summarize(ctx?: VoiceContext): string {
         })
         .join("\n")
     : "";
-  if (!ctx || !ctx.drawn?.length) return `The seeker has not yet drawn a reading.${historyBlock}`;
+  const horoBlock = ctx?.horoscope
+    ? (() => {
+        const h = ctx.horoscope!;
+        const natal = h.natal_sun ? `natal Sun in ${h.natal_sun.name} (${h.natal_sun.element})` : "no natal sign given";
+        const sections = h.sections?.length
+          ? "\n" + h.sections.map((s) => `  • ${s.label}: ${s.text}`).join("\n")
+          : "";
+        return `\n\nActive horoscope on the altar (timeframe: ${h.timeframe}) — ${natal}; transit Sun in ${h.transit_sun.name}${h.transit_moon ? `, transit Moon in ${h.transit_moon.name}` : ""}.${h.headline ? ` Headline: ${h.headline}` : ""}${sections}${h.synthesis ? `\n  Synthesis: ${h.synthesis}` : ""}`;
+      })()
+    : "";
+  if (!ctx || !ctx.drawn?.length) {
+    const birth = ctx?.birthdate ? `\nSeeker's birthdate: ${ctx.birthdate}.` : "";
+    const q = ctx?.question ? `\nSeeker asked: ${ctx.question}.` : "";
+    const sig = ctx?.sigil ? `\nActive sigil — intent: "${ctx.sigil.statement}"; reduced: ${ctx.sigil.reduced}.` : "";
+    const vis = ctx?.vision ? `\nA summoned vision is present — its prompt: ${ctx.vision.prompt}.` : "";
+    return `The seeker has not yet drawn a symbol reading.${q}${birth}${sig}${vis}${horoBlock}${historyBlock}`;
+  }
   const lines = ctx.drawn
     .map((d) => {
       const kw = d.keywords?.length ? ` — keywords: ${d.keywords.slice(0, 5).join(", ")}` : "";
@@ -74,9 +99,9 @@ function summarize(ctx?: VoiceContext): string {
 System: ${ctx.system ?? "unknown"}. Spread: ${ctx.spread ?? "unknown"}.
 Cards drawn:
 ${lines}${posNotes}
-${ctx.synthesis ? `\nSynthesis so far: ${ctx.synthesis}` : ""}${sigilBlock}${pendingBlock}${visionBlock}${historyBlock}
+${ctx.synthesis ? `\nSynthesis so far: ${ctx.synthesis}` : ""}${sigilBlock}${pendingBlock}${visionBlock}${horoBlock}${historyBlock}
 
-When you speak, weave the cards, the sigil, and the vision together into one synthesis — explain how they reinforce or complicate one another for the seeker.`;
+When you speak, weave the cards, the sigil, the vision, and the current horoscope together into one synthesis — explain how they reinforce or complicate one another for the seeker.`;
 }
 
 function VoiceAgentInner({ context, onReady }: { context?: VoiceContext; onReady?: (api: VoiceApi) => void }) {
