@@ -14,7 +14,287 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      readings: {
+        Row: {
+          closing_note: string | null
+          created_at: string
+          drawn: Json
+          id: string
+          question: string | null
+          rng_method: string
+          rng_seed: string
+          session_id: string | null
+          spread_slug: string
+          system: string
+          transcript: string | null
+          user_id: string | null
+        }
+        Insert: {
+          closing_note?: string | null
+          created_at?: string
+          drawn: Json
+          id?: string
+          question?: string | null
+          rng_method?: string
+          rng_seed: string
+          session_id?: string | null
+          spread_slug: string
+          system: string
+          transcript?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          closing_note?: string | null
+          created_at?: string
+          drawn?: Json
+          id?: string
+          question?: string | null
+          rng_method?: string
+          rng_seed?: string
+          session_id?: string | null
+          spread_slug?: string
+          system?: string
+          transcript?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "readings_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sessions: {
+        Row: {
+          el_conversation_id: string | null
+          ended_at: string | null
+          id: string
+          started_at: string
+          user_id: string | null
+        }
+        Insert: {
+          el_conversation_id?: string | null
+          ended_at?: string | null
+          id?: string
+          started_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          el_conversation_id?: string | null
+          ended_at?: string | null
+          id?: string
+          started_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      sigils: {
+        Row: {
+          created_at: string
+          id: string
+          intent: string
+          letters_reduced: string
+          model: string | null
+          prompt: string | null
+          source_upload_id: string | null
+          statement: string
+          storage_path: string | null
+          svg: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          intent: string
+          letters_reduced: string
+          model?: string | null
+          prompt?: string | null
+          source_upload_id?: string | null
+          statement: string
+          storage_path?: string | null
+          svg: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          intent?: string
+          letters_reduced?: string
+          model?: string | null
+          prompt?: string | null
+          source_upload_id?: string | null
+          statement?: string
+          storage_path?: string | null
+          svg?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sigils_source_upload_id_fkey"
+            columns: ["source_upload_id"]
+            isOneToOne: false
+            referencedRelation: "uploads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      spreads: {
+        Row: {
+          id: string
+          name: string
+          positions: Json
+          slug: string
+          system: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          positions: Json
+          slug: string
+          system: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          positions?: Json
+          slug?: string
+          system?: string
+        }
+        Relationships: []
+      }
+      symbols: {
+        Row: {
+          arcana: string | null
+          changing_text: Json | null
+          code: string
+          id: string
+          image_url: string | null
+          keywords: string[]
+          name: string
+          number: number | null
+          reversed_text: string | null
+          suit: string | null
+          system: string
+          upright_text: string
+        }
+        Insert: {
+          arcana?: string | null
+          changing_text?: Json | null
+          code: string
+          id?: string
+          image_url?: string | null
+          keywords?: string[]
+          name: string
+          number?: number | null
+          reversed_text?: string | null
+          suit?: string | null
+          system: string
+          upright_text: string
+        }
+        Update: {
+          arcana?: string | null
+          changing_text?: Json | null
+          code?: string
+          id?: string
+          image_url?: string | null
+          keywords?: string[]
+          name?: string
+          number?: number | null
+          reversed_text?: string | null
+          suit?: string | null
+          system?: string
+          upright_text?: string
+        }
+        Relationships: []
+      }
+      uploads: {
+        Row: {
+          created_at: string
+          extracted_text: string | null
+          filename: string | null
+          id: string
+          kind: string
+          mime_type: string | null
+          session_id: string | null
+          storage_path: string
+          summary: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          extracted_text?: string | null
+          filename?: string | null
+          id?: string
+          kind: string
+          mime_type?: string | null
+          session_id?: string | null
+          storage_path: string
+          summary?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          extracted_text?: string | null
+          filename?: string | null
+          id?: string
+          kind?: string
+          mime_type?: string | null
+          session_id?: string | null
+          storage_path?: string
+          summary?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "uploads_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      visions: {
+        Row: {
+          created_at: string
+          id: string
+          model: string | null
+          prompt: string
+          reading_id: string | null
+          storage_path: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          model?: string | null
+          prompt: string
+          reading_id?: string | null
+          storage_path: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          model?: string | null
+          prompt?: string
+          reading_id?: string | null
+          storage_path?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "visions_reading_id_fkey"
+            columns: ["reading_id"]
+            isOneToOne: false
+            referencedRelation: "readings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
