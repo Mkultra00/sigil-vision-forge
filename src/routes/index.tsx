@@ -350,16 +350,21 @@ function Ritual() {
                 ? {
                     question,
                     birthdate: birthdate || undefined,
+                    system: SPREADS[spreadIdx].system,
                     spread: reading.spread,
                     drawn: reading.drawn.map((d) => ({
                       label: d.label,
+                      hint: d.hint,
                       name: d.name,
                       reversed: d.reversed,
                       keywords: d.keywords,
+                      text: d.text,
+                      changing: d.changing,
                     })),
                     positions: interpretation?.positions,
                     synthesis: interpretation?.synthesis,
                     sigil: sigil ? { statement: sigil.statement, reduced: sigil.reduced, has_image: !!sigil.image_url } : null,
+                    pending_intent: intent && (!sigil || sigil.statement !== intent) ? intent : undefined,
                     vision: vision ? { prompt: vision.prompt, has_image: !!vision.image_url } : null,
                     history: history
                       .filter((h) => h.id !== reading.id)
@@ -372,8 +377,12 @@ function Ritual() {
                       })),
                   }
                 : {
+                    question: question || undefined,
                     birthdate: birthdate || undefined,
+                    system: SPREADS[spreadIdx].system,
+                    pending_spread: SPREADS[spreadIdx].name,
                     sigil: sigil ? { statement: sigil.statement, reduced: sigil.reduced, has_image: !!sigil.image_url } : null,
+                    pending_intent: intent && (!sigil || sigil.statement !== intent) ? intent : undefined,
                     vision: vision ? { prompt: vision.prompt, has_image: !!vision.image_url } : null,
                     history: history.map((h) => ({
                       question: h.question,
