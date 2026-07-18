@@ -4,7 +4,6 @@ import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { castReading } from "@/lib/divination.functions";
 import { castHoroscope, type Horoscope } from "@/lib/astrology.functions";
-import { generateSigil } from "@/lib/sigil.functions";
 import { generateVision } from "@/lib/vision.functions";
 import { interpretReading } from "@/lib/interpret.functions";
 import { VoiceAgent, type VoiceApi } from "@/components/VoiceAgent";
@@ -86,7 +85,6 @@ function Ritual() {
   const ready = useAnonSession();
   const cast = useServerFn(castReading);
   const horoscopeFn = useServerFn(castHoroscope);
-  const sigilFn = useServerFn(generateSigil);
   const visionFn = useServerFn(generateVision);
   const interpretFn = useServerFn(interpretReading);
 
@@ -110,10 +108,6 @@ function Ritual() {
     positions: Array<{ position: number; significance: string }>;
     synthesis: string;
   } | null>(null);
-
-  const [intent, setIntent] = useState("");
-  const [sigilBusy, setSigilBusy] = useState(false);
-  const [sigil, setSigil] = useState<{ svg: string; image_url: string | null; statement: string; reduced: string } | null>(null);
 
   const [visionBusy, setVisionBusy] = useState(false);
   const [vision, setVision] = useState<{ image_url: string | null; prompt: string } | null>(null);
@@ -190,17 +184,6 @@ function Ritual() {
         .finally(() => setInterpretBusy(false));
     } catch (e) { setErr(e instanceof Error ? e.message : String(e)); }
     finally { setDrawing(false); }
-  }
-
-  async function onSigil() {
-    const source = (intent.trim() || question.trim());
-    if (!source) return;
-    setSigilBusy(true); setErr(null);
-    try {
-      const r = await sigilFn({ data: { intent: source, ornament: true } });
-      setSigil({ svg: r.svg, image_url: r.image_url, statement: r.statement, reduced: r.reduced });
-    } catch (e) { setErr(e instanceof Error ? e.message : String(e)); }
-    finally { setSigilBusy(false); }
   }
 
   async function onVision() {
