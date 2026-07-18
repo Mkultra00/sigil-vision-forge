@@ -265,6 +265,8 @@ function Ritual() {
                   d={d}
                   significance={interpretation?.positions.find((p) => p.position === d.position)?.significance}
                   loading={interpretBusy && !interpretation}
+                  onSpeak={(txt) => speak(`pos-${d.position}`, txt)}
+                  speaking={speakBusy === `pos-${d.position}`}
                 />
               ))}
             </div>
@@ -272,7 +274,18 @@ function Ritual() {
               <div className="mt-8 rounded-xl border border-amber-100/10 bg-black/40 p-6 max-w-3xl mx-auto">
                 <div className="text-[10px] tracking-[0.3em] uppercase text-amber-200/60 mb-2">Synthesis</div>
                 {interpretation?.synthesis ? (
-                  <p className="text-stone-200 font-serif leading-relaxed italic">{interpretation.synthesis}</p>
+                  <>
+                    <p className="text-stone-200 font-serif leading-relaxed italic">{interpretation.synthesis}</p>
+                    <div className="mt-4 flex justify-end">
+                      <button
+                        onClick={() => speak("synthesis", interpretation.synthesis)}
+                        disabled={speakBusy === "synthesis"}
+                        className="text-[10px] tracking-[0.25em] uppercase text-amber-200/80 border border-amber-200/30 rounded-full px-3 py-1 hover:bg-amber-100/5 disabled:opacity-50"
+                      >
+                        {speakBusy === "synthesis" ? "Speaking…" : "Hear it spoken"}
+                      </button>
+                    </div>
+                  </>
                 ) : (
                   <p className="text-stone-500 text-sm italic">The threads are being drawn together…</p>
                 )}
