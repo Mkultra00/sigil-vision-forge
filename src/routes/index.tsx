@@ -1,12 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { castReading } from "@/lib/divination.functions";
 import { generateSigil } from "@/lib/sigil.functions";
 import { generateVision } from "@/lib/vision.functions";
 import { interpretReading } from "@/lib/interpret.functions";
-import { VoiceAgent } from "@/components/VoiceAgent";
+import { VoiceAgent, type VoiceApi } from "@/components/VoiceAgent";
 import { tarotImageUrl } from "@/lib/tarot-images";
 import { HexagramGlyph } from "@/components/HexagramGlyph";
 
@@ -102,6 +102,15 @@ function Ritual() {
 
   const [visionBusy, setVisionBusy] = useState(false);
   const [vision, setVision] = useState<{ image_url: string | null; prompt: string } | null>(null);
+
+  const voiceRef = useRef<VoiceApi | null>(null);
+  const [speakBusy, setSpeakBusy] = useState<string | null>(null);
+  const speak = useCallback(async (label: string, text: string) => {
+    if (!text.trim() || !voiceRef.current) return;
+    setSpeakBusy(label);
+    try { await voiceRef.current.speak(`Please speak this aloud to the seeker, in your voice: "${text}"`); }
+    finally { setSpeakBusy(null); }
+  }, []);
 
   const [history, setHistory] = useState<PastReading[]>(() => {
     if (typeof window === "undefined") return [];
@@ -256,6 +265,8 @@ function Ritual() {
                   d={d}
                   significance={interpretation?.positions.find((p) => p.position === d.position)?.significance}
                   loading={interpretBusy && !interpretation}
+                  onSpeak={(txt) => speak(`pos-${d.position}`, txt)}
+                  speaking={speakBusy === `pos-${d.position}`}
                 />
               ))}
             </div>
@@ -263,7 +274,18 @@ function Ritual() {
               <div className="mt-8 rounded-xl border border-amber-100/10 bg-black/40 p-6 max-w-3xl mx-auto">
                 <div className="text-[10px] tracking-[0.3em] uppercase text-amber-200/60 mb-2">Synthesis</div>
                 {interpretation?.synthesis ? (
-                  <p className="text-stone-200 font-serif leading-relaxed italic">{interpretation.synthesis}</p>
+                  <>
+                    <p className="text-stone-200 font-serif leading-relaxed italic">{interpretation.synthesis}</p>
+                    <div className="mt-4 flex justify-end">
+                      <button
+                        onClick={() => speak("synthesis", interpretation.synthesis)}
+                        disabled={speakBusy === "synthesis"}
+                        className="text-[10px] tracking-[0.25em] uppercase text-amber-200/80 border border-amber-200/30 rounded-full px-3 py-1 hover:bg-amber-100/5 disabled:opacity-50"
+                      >
+                        {speakBusy === "synthesis" ? "Speaking…" : "Hear it spoken"}
+                      </button>
+                    </div>
+                  </>
                 ) : (
                   <p className="text-stone-500 text-sm italic">The threads are being drawn together…</p>
                 )}
@@ -322,6 +344,7 @@ function Ritual() {
 
         {ready && (
           <VoiceAgent
+            onReady={(api) => { voiceRef.current = api; }}
             context={
               reading
                 ? {
@@ -403,7 +426,7 @@ function Ritual() {
   );
 }
 
-function SymbolCard({ d, significance, loading }: { d: Drawn; significance?: string; loading?: boolean }) {
+function SymbolCard({ d, significance, loading, onSpeak, speaking }: { d: Drawn; significance?: string; loading?: boolean; onSpeak?: (text: string) => void; speaking?: boolean }) {
   const img = tarotImageUrl(d.code);
   return (
     <div className="rounded-xl border border-amber-100/10 bg-gradient-to-b from-stone-900/60 to-black/60 p-5">
@@ -444,7 +467,18 @@ function SymbolCard({ d, significance, loading }: { d: Drawn; significance?: str
       <div className="mt-4 pt-4 border-t border-amber-100/10">
         <div className="text-[10px] tracking-[0.3em] uppercase text-amber-200/60 mb-1">Significance</div>
         {significance ? (
-          <p className="text-sm text-amber-50/90 font-serif italic leading-relaxed">{significance}</p>
+          <>
+            <p className="text-sm text-amber-50/90 font-serif italic leading-relaxed">{significance}</p>
+            {onSpeak && (
+              <button
+                onClick={() => onSpeak(significance)}
+                disabled={speaking}
+                className="mt-3 text-[10px] tracking-[0.25em] uppercase text-amber-200/70 border border-amber-200/25 rounded-full px-3 py-1 hover:bg-amber-100/5 disabled:opacity-50"
+              >
+                {speaking ? "Speaking…" : "Hear it spoken"}
+              </button>
+            )}
+          </>
         ) : loading ? (
           <p className="text-xs text-stone-500 italic">Listening for meaning…</p>
         ) : (

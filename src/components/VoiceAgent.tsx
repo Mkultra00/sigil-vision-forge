@@ -19,10 +19,15 @@ export type VoiceContext = {
   }>;
 };
 
-export function VoiceAgent({ context }: { context?: VoiceContext }) {
+export type VoiceApi = {
+  speak: (text: string) => Promise<void>;
+  isConnected: () => boolean;
+};
+
+export function VoiceAgent({ context, onReady }: { context?: VoiceContext; onReady?: (api: VoiceApi) => void }) {
   return (
     <ConversationProvider>
-      <VoiceAgentInner context={context} />
+      <VoiceAgentInner context={context} onReady={onReady} />
     </ConversationProvider>
   );
 }
@@ -61,7 +66,7 @@ ${ctx.synthesis ? `\nSynthesis so far: ${ctx.synthesis}` : ""}${sigilBlock}${vis
 When you speak, weave the cards, the sigil, and the vision together into one synthesis — explain how they reinforce or complicate one another for the seeker.`;
 }
 
-function VoiceAgentInner({ context }: { context?: VoiceContext }) {
+function VoiceAgentInner({ context, onReady }: { context?: VoiceContext; onReady?: (api: VoiceApi) => void }) {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const lastSent = useRef<string>("");
@@ -91,6 +96,25 @@ function VoiceAgentInner({ context }: { context?: VoiceContext }) {
 
   const connected = conversation.status === "connected";
   const speaking = conversation.isSpeaking;
+
+  const connectedRef = useRef(connected);
+  useEffect(() => { connectedRef.current = connected; }, [connected]);
+
+  const speak = useCallback(async (text: string) => {
+    if (!text.trim()) return;
+    if (!connectedRef.current) {
+      await start();
+      // wait briefly for session to be ready
+      for (let i = 0; i < 40 && !connectedRef.current; i++) {
+        await new Promise((r) => setTimeout(r, 100));
+      }
+    }
+    try { conversation.sendUserMessage(text); } catch { /* noop */ }
+  }, [conversation, start]);
+
+  useEffect(() => {
+    onReady?.({ speak, isConnected: () => connectedRef.current });
+  }, [onReady, speak]);
 
   // Push updated reading context to the live agent whenever it changes.
   useEffect(() => {
