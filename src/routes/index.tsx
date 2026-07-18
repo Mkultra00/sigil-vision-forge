@@ -11,6 +11,7 @@ import { VoiceAgent, type VoiceApi } from "@/components/VoiceAgent";
 import { tarotImageUrl } from "@/lib/tarot-images";
 import { HexagramGlyph } from "@/components/HexagramGlyph";
 import { ZodiacWheel } from "@/components/ZodiacWheel";
+import shamanAvatar from "@/assets/shaman-avatar.jpg";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -217,6 +218,18 @@ function Ritual() {
     }}>
       <div className="mx-auto max-w-5xl px-6 py-16">
         <header className="text-center mb-12">
+          <div className="flex justify-center mb-6">
+            <div className="relative">
+              <div className="absolute inset-0 rounded-full bg-gradient-to-br from-amber-300/30 via-purple-500/20 to-indigo-500/30 blur-2xl" />
+              <img
+                src={shamanAvatar}
+                alt="The Shaman"
+                width={144}
+                height={144}
+                className="relative w-36 h-36 rounded-full object-cover border border-amber-200/30 shadow-[0_0_60px_-10px_rgba(217,180,110,0.35)]"
+              />
+            </div>
+          </div>
           <div className="text-xs tracking-[0.4em] text-amber-200/60 uppercase">Shaman</div>
           <h1 className="mt-3 text-4xl md:text-5xl font-serif text-amber-50">A Quiet Ritual</h1>
           <p className="mt-4 text-stone-300/80 max-w-xl mx-auto text-sm leading-relaxed">
