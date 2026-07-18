@@ -291,7 +291,7 @@ function Ritual() {
         {horoscope && (
           <HoroscopePanel
             h={horoscope}
-            onSpeak={(key, text) => speak(`horo-${key}`, text)}
+            onSpeak={(key: string, text: string) => speak(`horo-${key}`, text)}
             speakingKey={speakBusy?.startsWith("horo-") ? speakBusy.slice(5) : null}
           />
         )}
