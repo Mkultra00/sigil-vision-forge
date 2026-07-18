@@ -326,6 +326,7 @@ function Ritual() {
               reading
                 ? {
                     question,
+                    birthdate: birthdate || undefined,
                     spread: reading.spread,
                     drawn: reading.drawn.map((d) => ({
                       label: d.label,
@@ -348,6 +349,7 @@ function Ritual() {
                       })),
                   }
                 : {
+                    birthdate: birthdate || undefined,
                     sigil: sigil ? { statement: sigil.statement, reduced: sigil.reduced, has_image: !!sigil.image_url } : null,
                     vision: vision ? { prompt: vision.prompt, has_image: !!vision.image_url } : null,
                     history: history.map((h) => ({
