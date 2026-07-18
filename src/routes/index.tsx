@@ -140,12 +140,14 @@ function Ritual() {
   // When an interpretation lands for the current reading, fold it into history.
   useEffect(() => {
     if (!reading || !interpretation) return;
+    const sys = SPREADS[spreadIdx].system;
+    if (sys === "astrology") return;
     setHistory((prev) => {
       const withoutCurrent = prev.filter((h) => h.id !== reading.id);
       const entry: PastReading = {
         id: reading.id,
         question,
-        system: SPREADS[spreadIdx].system,
+        system: sys,
         spread: reading.spread,
         drawn: reading.drawn,
         synthesis: interpretation.synthesis,
