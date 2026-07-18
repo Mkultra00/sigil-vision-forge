@@ -4,7 +4,6 @@ import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { castReading } from "@/lib/divination.functions";
 import { castHoroscope, type Horoscope } from "@/lib/astrology.functions";
-import { generateSigil } from "@/lib/sigil.functions";
 import { generateVision } from "@/lib/vision.functions";
 import { interpretReading } from "@/lib/interpret.functions";
 import { VoiceAgent, type VoiceApi } from "@/components/VoiceAgent";
@@ -86,7 +85,6 @@ function Ritual() {
   const ready = useAnonSession();
   const cast = useServerFn(castReading);
   const horoscopeFn = useServerFn(castHoroscope);
-  const sigilFn = useServerFn(generateSigil);
   const visionFn = useServerFn(generateVision);
   const interpretFn = useServerFn(interpretReading);
 
@@ -110,10 +108,6 @@ function Ritual() {
     positions: Array<{ position: number; significance: string }>;
     synthesis: string;
   } | null>(null);
-
-  const [intent, setIntent] = useState("");
-  const [sigilBusy, setSigilBusy] = useState(false);
-  const [sigil, setSigil] = useState<{ svg: string; image_url: string | null; statement: string; reduced: string } | null>(null);
 
   const [visionBusy, setVisionBusy] = useState(false);
   const [vision, setVision] = useState<{ image_url: string | null; prompt: string } | null>(null);
@@ -190,17 +184,6 @@ function Ritual() {
         .finally(() => setInterpretBusy(false));
     } catch (e) { setErr(e instanceof Error ? e.message : String(e)); }
     finally { setDrawing(false); }
-  }
-
-  async function onSigil() {
-    const source = (intent.trim() || question.trim());
-    if (!source) return;
-    setSigilBusy(true); setErr(null);
-    try {
-      const r = await sigilFn({ data: { intent: source, ornament: true } });
-      setSigil({ svg: r.svg, image_url: r.image_url, statement: r.statement, reduced: r.reduced });
-    } catch (e) { setErr(e instanceof Error ? e.message : String(e)); }
-    finally { setSigilBusy(false); }
   }
 
   async function onVision() {
@@ -365,69 +348,6 @@ function Ritual() {
           </section>
         )}
 
-        <section className="mt-16 rounded-2xl border border-amber-100/10 bg-black/30 backdrop-blur p-6 md:p-8">
-          <div className="text-xs tracking-[0.3em] uppercase text-amber-200/60 mb-3">Sigil</div>
-          <p className="text-sm text-stone-400 mb-4">
-            Your question above becomes the statement of will. Edit it here to sharpen the
-            intent — vowels are burned away, letters bound to a geometric line, then adorned
-            by the current.
-          </p>
-          <div className="flex gap-3 items-start">
-            <input value={intent} onChange={(e) => setIntent(e.target.value)}
-              placeholder={question.trim() ? question : "to move with courage"}
-              className="flex-1 bg-transparent border-b border-amber-100/20 focus:border-amber-200/60 outline-none py-2 text-amber-50 placeholder:text-stone-500 font-serif" />
-            <button onClick={onSigil} disabled={sigilBusy || !(intent.trim() || question.trim())}
-              className="px-5 py-2 rounded-full bg-amber-100/90 text-stone-900 text-sm hover:bg-amber-50 disabled:opacity-50">
-              {sigilBusy ? "Binding…" : "Bind"}
-            </button>
-          </div>
-          {!intent.trim() && question.trim() && (
-            <div className="mt-2 text-[11px] text-amber-200/60">
-              Will use your question: <span className="italic text-amber-100/80">"{question}"</span>
-              <button
-                type="button"
-                onClick={() => setIntent(question)}
-                className="ml-2 underline hover:text-amber-100"
-              >
-                edit
-              </button>
-            </div>
-          )}
-          {sigil && (
-            <div className="mt-6 space-y-6">
-              <div className="grid gap-6 md:grid-cols-2 items-start">
-                <div className="flex flex-col items-center gap-2">
-                  <div className="text-[10px] tracking-[0.3em] uppercase text-amber-200/50">Symbolic seal</div>
-                  <div className="rounded-lg border border-amber-100/20 p-2 bg-black/40 w-full max-w-sm"
-                    dangerouslySetInnerHTML={{ __html: sigil.svg }} />
-                </div>
-                {sigil.image_url && (
-                  <div className="flex flex-col items-center gap-2">
-                    <div className="text-[10px] tracking-[0.3em] uppercase text-amber-200/50">Adorned</div>
-                    <img src={sigil.image_url} alt="Sigil" className="rounded-lg w-full max-w-sm border border-amber-100/20" />
-                  </div>
-                )}
-              </div>
-              <div className="rounded-xl border border-amber-100/10 bg-black/40 p-5 space-y-4">
-                <div>
-                  <div className="text-[10px] tracking-[0.3em] uppercase text-amber-200/60 mb-1">Statement of will</div>
-                  <p className="font-serif italic text-lg text-amber-50/95 leading-snug">{sigil.statement}</p>
-                </div>
-                <div>
-                  <div className="text-[10px] tracking-[0.3em] uppercase text-amber-200/60 mb-1">Reduced letters — the bound glyph</div>
-                  <div className="flex flex-wrap gap-2">
-                    {[...sigil.reduced].map((ch, i) => (
-                      <span key={i} className="inline-flex items-center justify-center h-9 w-9 rounded border border-amber-200/30 bg-amber-100/5 font-serif text-amber-100 text-lg">
-                        {ch}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-        </section>
-
         {ready && (
           <VoiceAgent
             onReady={(api) => { voiceRef.current = api; }}
@@ -449,8 +369,6 @@ function Ritual() {
                     })),
                     positions: interpretation?.positions,
                     synthesis: interpretation?.synthesis,
-                    sigil: sigil ? { statement: sigil.statement, reduced: sigil.reduced, has_image: !!sigil.image_url } : null,
-                    pending_intent: intent && (!sigil || sigil.statement !== intent) ? intent : undefined,
                     vision: vision ? { prompt: vision.prompt, has_image: !!vision.image_url } : null,
                     history: history
                       .filter((h) => h.id !== reading.id)
@@ -476,8 +394,6 @@ function Ritual() {
                     birthdate: birthdate || undefined,
                     system: SPREADS[spreadIdx].system,
                     pending_spread: SPREADS[spreadIdx].name,
-                    sigil: sigil ? { statement: sigil.statement, reduced: sigil.reduced, has_image: !!sigil.image_url } : null,
-                    pending_intent: intent && (!sigil || sigil.statement !== intent) ? intent : undefined,
                     vision: vision ? { prompt: vision.prompt, has_image: !!vision.image_url } : null,
                     history: history.map((h) => ({
                       question: h.question,
