@@ -344,6 +344,7 @@ function Ritual() {
 
         {ready && (
           <VoiceAgent
+            onReady={(api) => { voiceRef.current = api; }}
             context={
               reading
                 ? {
