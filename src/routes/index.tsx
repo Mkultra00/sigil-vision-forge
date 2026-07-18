@@ -264,30 +264,32 @@ function SymbolCard({ d }: { d: Drawn }) {
 // The classic Celtic Cross positions. Uses percentage coordinates within a
 // square-ish board so cards land in the traditional cross + staff layout.
 const CELTIC_POSITIONS: Record<number, { x: number; y: number; rotate?: number; z?: number }> = {
-  0: { x: 33, y: 50, z: 1 },        // 1. Significator (center)
-  1: { x: 33, y: 50, rotate: 90, z: 2 }, // 2. Crossing card
-  2: { x: 33, y: 82 },              // 3. Below (foundation)
-  3: { x: 12, y: 50 },              // 4. Left (past)
-  4: { x: 33, y: 18 },              // 5. Above (crown)
-  5: { x: 54, y: 50 },              // 6. Right (future)
-  6: { x: 82, y: 88 },              // 7. Self
-  7: { x: 82, y: 66 },              // 8. Environment
-  8: { x: 82, y: 44 },              // 9. Hopes / fears
-  9: { x: 82, y: 22 },              // 10. Outcome
+  0: { x: 38, y: 50, z: 1 },              // 1. Significator (center)
+  1: { x: 38, y: 50, rotate: 90, z: 2 },  // 2. Crossing (over 1)
+  2: { x: 38, y: 82 },                    // 3. Below
+  3: { x: 15, y: 50 },                    // 4. Left (past)
+  4: { x: 38, y: 18 },                    // 5. Above (crown)
+  5: { x: 61, y: 50 },                    // 6. Right (future)
+  6: { x: 86, y: 84 },                    // 7. Self
+  7: { x: 86, y: 64 },                    // 8. Environment
+  8: { x: 86, y: 42 },                    // 9. Hopes / fears
+  9: { x: 86, y: 20 },                    // 10. Outcome
 };
 
 function CelticCrossBoard({ drawn }: { drawn: Drawn[] }) {
   return (
     <div className="relative w-full mx-auto rounded-2xl border border-amber-100/10 bg-black/30 backdrop-blur"
-      style={{ maxWidth: 720, aspectRatio: "1 / 1" }}>
+      style={{ maxWidth: 640, aspectRatio: "1 / 0.9" }}>
       {drawn.map((d) => {
         const pos = CELTIC_POSITIONS[d.position];
         if (!pos) return null;
         const img = tarotImageUrl(d.code);
         const rot = (pos.rotate ?? 0) + (d.reversed && pos.rotate == null ? 180 : 0);
+        // Significator label goes to the left so it isn't hidden by the crossing card.
+        const labelLeft = d.position === 0;
         return (
           <div key={`${d.position}-${d.code}`}
-            className="absolute flex flex-col items-center"
+            className="absolute"
             style={{
               left: `${pos.x}%`,
               top: `${pos.y}%`,
@@ -295,15 +297,26 @@ function CelticCrossBoard({ drawn }: { drawn: Drawn[] }) {
               zIndex: pos.z ?? 0,
             }}
             title={`${d.position + 1}. ${d.label} — ${d.name}`}>
-            <div className="relative rounded-md overflow-hidden border border-amber-200/30 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.7)] bg-black/40"
-              style={{ width: 74, aspectRatio: "0.58", transform: `rotate(${rot}deg)` }}>
-              {img ? (
-                <img src={img} alt={d.name} loading="lazy" className="w-full h-full object-cover" />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-[9px] text-amber-100/70 p-1 text-center">{d.name}</div>
-              )}
+            <div className="relative">
+              <div className="rounded-md overflow-hidden border border-amber-200/30 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.7)] bg-black/40"
+                style={{ width: 68, aspectRatio: "0.58", transform: `rotate(${rot}deg)` }}>
+                {img ? (
+                  <img src={img} alt={d.name} loading="lazy" className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-[9px] text-amber-100/70 p-1 text-center">{d.name}</div>
+                )}
+              </div>
+              <div
+                className="absolute text-[10px] tracking-widest text-amber-200/80 font-serif"
+                style={
+                  labelLeft
+                    ? { right: "calc(100% + 8px)", top: "50%", transform: "translateY(-50%)" }
+                    : { left: "50%", bottom: "-18px", transform: "translateX(-50%)" }
+                }
+              >
+                {d.position + 1}
+              </div>
             </div>
-            <div className="mt-1 text-[9px] tracking-widest uppercase text-amber-200/70">{d.position + 1}</div>
           </div>
         );
       })}
