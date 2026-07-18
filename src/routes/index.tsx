@@ -3,12 +3,14 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { castReading } from "@/lib/divination.functions";
+import { castHoroscope, type Horoscope } from "@/lib/astrology.functions";
 import { generateSigil } from "@/lib/sigil.functions";
 import { generateVision } from "@/lib/vision.functions";
 import { interpretReading } from "@/lib/interpret.functions";
 import { VoiceAgent, type VoiceApi } from "@/components/VoiceAgent";
 import { tarotImageUrl } from "@/lib/tarot-images";
 import { HexagramGlyph } from "@/components/HexagramGlyph";
+import { ZodiacWheel } from "@/components/ZodiacWheel";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -67,19 +69,31 @@ function useAnonSession() {
 
 const SPREADS = [
   { system: "tarot" as const, slug: "three_card", name: "Three Card — Past · Present · Future" },
-  { system: "tarot" as const, slug: "celtic_cross", name: "Celtic Cross (10 cards)" },
   { system: "iching" as const, slug: "hexagram_6line", name: "I Ching — Six Lines" },
+  { system: "astrology" as const, slug: "horoscope", name: "Western Horoscope" },
+];
+
+const TIMEFRAMES = [
+  { value: "today" as const, label: "Today" },
+  { value: "week" as const, label: "This week" },
+  { value: "month" as const, label: "This month" },
+  { value: "quarter" as const, label: "3 months" },
+  { value: "year" as const, label: "This year" },
 ];
 
 function Ritual() {
   const ready = useAnonSession();
   const cast = useServerFn(castReading);
+  const horoscopeFn = useServerFn(castHoroscope);
   const sigilFn = useServerFn(generateSigil);
   const visionFn = useServerFn(generateVision);
   const interpretFn = useServerFn(interpretReading);
 
   const [question, setQuestion] = useState("");
   const [spreadIdx, setSpreadIdx] = useState(0);
+  const [timeframe, setTimeframe] = useState<typeof TIMEFRAMES[number]["value"]>("today");
+  const [horoscope, setHoroscope] = useState<Horoscope | null>(null);
+  const [horoBusy, setHoroBusy] = useState(false);
   const [birthdate, setBirthdate] = useState<string>(() => {
     if (typeof window === "undefined") return "";
     try { return window.localStorage.getItem("shaman.birthdate.v1") ?? ""; } catch { return ""; }
@@ -143,9 +157,17 @@ function Ritual() {
   }, [reading, interpretation, question, spreadIdx]);
 
   async function onDraw() {
-    setErr(null); setDrawing(true); setReading(null); setVision(null); setInterpretation(null);
+    setErr(null); setDrawing(true); setReading(null); setVision(null); setInterpretation(null); setHoroscope(null);
     try {
       const s = SPREADS[spreadIdx];
+      if (s.system === "astrology") {
+        setHoroBusy(true);
+        try {
+          const h = await horoscopeFn({ data: { birthdate: birthdate || undefined, timeframe, question: question || undefined } });
+          setHoroscope(h);
+        } finally { setHoroBusy(false); }
+        return;
+      }
       const r = await cast({ data: { system: s.system, spread_slug: s.slug, question: question || undefined } });
       setReading({ id: r.reading_id, spread: r.spread_name, drawn: r.drawn as Drawn[] });
       // Kick off interpretation in the background.
