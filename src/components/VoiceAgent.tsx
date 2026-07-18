@@ -7,6 +7,8 @@ export type VoiceContext = {
   drawn?: Array<{ label: string; name: string; reversed?: boolean; keywords?: string[] }>;
   synthesis?: string;
   positions?: Array<{ position: number; significance: string }>;
+  sigil?: { statement: string; reduced: string; has_image: boolean } | null;
+  vision?: { prompt: string; has_image: boolean } | null;
   history?: Array<{
     question?: string;
     spread?: string;
@@ -42,11 +44,19 @@ function summarize(ctx?: VoiceContext): string {
     ? "\nPer-position significance:\n" +
       ctx.positions.map((p) => `#${p.position + 1}: ${p.significance}`).join("\n")
     : "";
+  const sigilBlock = ctx.sigil
+    ? `\n\nActive sigil on the altar — intent: "${ctx.sigil.statement}"; reduced glyph-letters: ${ctx.sigil.reduced}${ctx.sigil.has_image ? " (an ornamented sigil image is visible to the seeker)" : ""}.`
+    : "";
+  const visionBlock = ctx.vision
+    ? `\n\nA summoned vision is present${ctx.vision.has_image ? " (image rendered)" : ""} — its prompt: ${ctx.vision.prompt}`
+    : "";
   return `The seeker asked: ${ctx.question || "(unspoken)"}.
 Spread: ${ctx.spread ?? "unknown"}.
 Cards drawn:
 ${lines}${posNotes}
-${ctx.synthesis ? `\nSynthesis so far: ${ctx.synthesis}` : ""}${historyBlock}`;
+${ctx.synthesis ? `\nSynthesis so far: ${ctx.synthesis}` : ""}${sigilBlock}${visionBlock}${historyBlock}
+
+When you speak, weave the cards, the sigil, and the vision together into one synthesis — explain how they reinforce or complicate one another for the seeker.`;
 }
 
 function VoiceAgentInner({ context }: { context?: VoiceContext }) {
