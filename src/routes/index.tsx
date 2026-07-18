@@ -10,7 +10,7 @@ import { VoiceAgent, type VoiceApi } from "@/components/VoiceAgent";
 import { tarotImageUrl } from "@/lib/tarot-images";
 import { HexagramGlyph } from "@/components/HexagramGlyph";
 import { ZodiacWheel } from "@/components/ZodiacWheel";
-import { Mandala } from "@/components/Mandala";
+import { buildSigilSvg, reduceLetters } from "@/lib/sigil-svg";
 import shamanAvatar from "@/assets/shaman-avatar.jpg";
 
 export const Route = createFileRoute("/")({
