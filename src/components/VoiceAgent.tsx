@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 export type VoiceContext = {
   question?: string;
+  birthdate?: string;
   spread?: string;
   drawn?: Array<{ label: string; name: string; reversed?: boolean; keywords?: string[] }>;
   synthesis?: string;
@@ -50,7 +51,8 @@ function summarize(ctx?: VoiceContext): string {
   const visionBlock = ctx.vision
     ? `\n\nA summoned vision is present${ctx.vision.has_image ? " (image rendered)" : ""} — its prompt: ${ctx.vision.prompt}`
     : "";
-  return `The seeker asked: ${ctx.question || "(unspoken)"}.
+  const birthLine = ctx.birthdate ? `\nSeeker's birthdate: ${ctx.birthdate}.` : "";
+  return `The seeker asked: ${ctx.question || "(unspoken)"}.${birthLine}
 Spread: ${ctx.spread ?? "unknown"}.
 Cards drawn:
 ${lines}${posNotes}

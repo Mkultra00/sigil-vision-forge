@@ -17,6 +17,7 @@ const PriorReading = z.object({
 const Input = z.object({
   reading_id: z.string().uuid(),
   history: z.array(PriorReading).max(20).optional(),
+  birthdate: z.string().max(32).optional(),
 });
 
 type Drawn = {
@@ -65,7 +66,8 @@ export const interpretReading = createServerFn({ method: "POST" })
           })
           .join("\n")
       : "";
-    const user = `System: ${reading.system}. Spread: ${reading.spread_slug}. Question: ${reading.question ?? "(unspoken)"}.${priorBlock}
+    const birthBlock = data.birthdate ? `\nSeeker's birthdate: ${data.birthdate}. Let it subtly color the tone (season, elemental cast, life-cycle), without astrological jargon unless the cards invite it.` : "";
+    const user = `System: ${reading.system}. Spread: ${reading.spread_slug}. Question: ${reading.question ?? "(unspoken)"}.${birthBlock}${priorBlock}
 Drawn:
 ${list}
 

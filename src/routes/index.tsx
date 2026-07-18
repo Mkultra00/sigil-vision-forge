@@ -80,6 +80,13 @@ function Ritual() {
 
   const [question, setQuestion] = useState("");
   const [spreadIdx, setSpreadIdx] = useState(0);
+  const [birthdate, setBirthdate] = useState<string>(() => {
+    if (typeof window === "undefined") return "";
+    try { return window.localStorage.getItem("shaman.birthdate.v1") ?? ""; } catch { return ""; }
+  });
+  useEffect(() => {
+    try { window.localStorage.setItem("shaman.birthdate.v1", birthdate); } catch { /* noop */ }
+  }, [birthdate]);
   const [drawing, setDrawing] = useState(false);
   const [reading, setReading] = useState<{ id: string; spread: string; drawn: Drawn[] } | null>(null);
   const [err, setErr] = useState<string | null>(null);
@@ -143,7 +150,7 @@ function Ritual() {
         })),
         synthesis: h.synthesis,
       }));
-      interpretFn({ data: { reading_id: r.reading_id, history: priorForLLM } })
+      interpretFn({ data: { reading_id: r.reading_id, history: priorForLLM, birthdate: birthdate || undefined } })
         .then((res) => setInterpretation(res))
         .catch((e) => setErr(e instanceof Error ? e.message : String(e)))
         .finally(() => setInterpretBusy(false));
@@ -190,6 +197,23 @@ function Ritual() {
 
         {ready && (
           <section className="rounded-2xl border border-amber-100/10 bg-black/30 backdrop-blur p-6 md:p-8">
+            <div className="mb-6 flex flex-wrap items-center gap-3">
+              <label className="text-[10px] tracking-[0.25em] uppercase text-amber-200/60">Birthdate (optional)</label>
+              <input
+                type="date"
+                value={birthdate}
+                onChange={(e) => setBirthdate(e.target.value)}
+                className="bg-transparent border-b border-amber-100/20 focus:border-amber-200/60 outline-none py-1 text-sm text-amber-50 [color-scheme:dark]"
+              />
+              {birthdate && (
+                <button
+                  onClick={() => setBirthdate("")}
+                  className="text-[10px] tracking-widest uppercase text-stone-500 hover:text-rose-300/80"
+                >
+                  clear
+                </button>
+              )}
+            </div>
             <label className="block text-xs tracking-widest uppercase text-amber-200/70 mb-2">Your question</label>
             <textarea
               value={question} onChange={(e) => setQuestion(e.target.value)}
@@ -302,6 +326,7 @@ function Ritual() {
               reading
                 ? {
                     question,
+                    birthdate: birthdate || undefined,
                     spread: reading.spread,
                     drawn: reading.drawn.map((d) => ({
                       label: d.label,
@@ -324,6 +349,7 @@ function Ritual() {
                       })),
                   }
                 : {
+                    birthdate: birthdate || undefined,
                     sigil: sigil ? { statement: sigil.statement, reduced: sigil.reduced, has_image: !!sigil.image_url } : null,
                     vision: vision ? { prompt: vision.prompt, has_image: !!vision.image_url } : null,
                     history: history.map((h) => ({
