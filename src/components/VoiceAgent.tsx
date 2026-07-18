@@ -1,9 +1,17 @@
-import { useConversation } from "@elevenlabs/react";
+import { ConversationProvider, useConversation } from "@elevenlabs/react";
 import { useCallback, useEffect, useState } from "react";
 
 const LS_KEY = "shaman.elevenlabs.agentId";
 
 export function VoiceAgent() {
+  return (
+    <ConversationProvider>
+      <VoiceAgentInner />
+    </ConversationProvider>
+  );
+}
+
+function VoiceAgentInner() {
   const [agentId, setAgentId] = useState("");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
