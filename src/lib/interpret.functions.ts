@@ -2,7 +2,22 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-const Input = z.object({ reading_id: z.string().uuid() });
+const PriorReading = z.object({
+  question: z.string().nullable().optional(),
+  system: z.string(),
+  spread: z.string().optional(),
+  drawn: z.array(z.object({
+    label: z.string(),
+    name: z.string(),
+    reversed: z.boolean().optional(),
+    keywords: z.array(z.string()).optional(),
+  })),
+  synthesis: z.string().optional(),
+});
+const Input = z.object({
+  reading_id: z.string().uuid(),
+  history: z.array(PriorReading).max(20).optional(),
+});
 
 type Drawn = {
   position: number;
@@ -38,8 +53,19 @@ export const interpretReading = createServerFn({ method: "POST" })
       )
       .join("\n");
 
-    const system = `You are a soft-spoken diviner. Write in second person, present tense, gentle, poetic but concrete. No disclaimers. No lists inside paragraphs. Return STRICT JSON only.`;
-    const user = `System: ${reading.system}. Spread: ${reading.spread_slug}. Question: ${reading.question ?? "(unspoken)"}.
+    const system = `You are a soft-spoken diviner. Write in second person, present tense, gentle, poetic but concrete. No disclaimers. No lists inside paragraphs. When prior readings are given, treat them as the ongoing arc of this seeker: reference and build on them, note echoes, contrasts, and how the current draw answers or turns what came before. Return STRICT JSON only.`;
+    const priorBlock = (data.history ?? []).length
+      ? `\n\nPrior readings in this session (oldest first):\n` +
+        (data.history ?? [])
+          .map((h, i) => {
+            const cards = h.drawn
+              .map((d) => `${d.label}: ${d.name}${d.reversed ? " (rev)" : ""}`)
+              .join("; ");
+            return `(${i + 1}) [${h.system}${h.spread ? ` · ${h.spread}` : ""}] Q: ${h.question ?? "(unspoken)"} — ${cards}${h.synthesis ? ` — synthesis: ${h.synthesis}` : ""}`;
+          })
+          .join("\n")
+      : "";
+    const user = `System: ${reading.system}. Spread: ${reading.spread_slug}. Question: ${reading.question ?? "(unspoken)"}.${priorBlock}
 Drawn:
 ${list}
 
