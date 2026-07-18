@@ -193,10 +193,11 @@ function Ritual() {
   }
 
   async function onSigil() {
-    if (!intent.trim()) return;
+    const source = (intent.trim() || question.trim());
+    if (!source) return;
     setSigilBusy(true); setErr(null);
     try {
-      const r = await sigilFn({ data: { intent, ornament: true } });
+      const r = await sigilFn({ data: { intent: source, ornament: true } });
       setSigil({ svg: r.svg, image_url: r.image_url, statement: r.statement, reduced: r.reduced });
     } catch (e) { setErr(e instanceof Error ? e.message : String(e)); }
     finally { setSigilBusy(false); }
@@ -367,18 +368,31 @@ function Ritual() {
         <section className="mt-16 rounded-2xl border border-amber-100/10 bg-black/30 backdrop-blur p-6 md:p-8">
           <div className="text-xs tracking-[0.3em] uppercase text-amber-200/60 mb-3">Sigil</div>
           <p className="text-sm text-stone-400 mb-4">
-            Write a statement of will. The vowels are burned away, the letters bound to a
-            geometric line, then adorned by the current.
+            Your question above becomes the statement of will. Edit it here to sharpen the
+            intent — vowels are burned away, letters bound to a geometric line, then adorned
+            by the current.
           </p>
           <div className="flex gap-3 items-start">
             <input value={intent} onChange={(e) => setIntent(e.target.value)}
-              placeholder="to move with courage"
+              placeholder={question.trim() ? question : "to move with courage"}
               className="flex-1 bg-transparent border-b border-amber-100/20 focus:border-amber-200/60 outline-none py-2 text-amber-50 placeholder:text-stone-500 font-serif" />
-            <button onClick={onSigil} disabled={sigilBusy || !intent.trim()}
+            <button onClick={onSigil} disabled={sigilBusy || !(intent.trim() || question.trim())}
               className="px-5 py-2 rounded-full bg-amber-100/90 text-stone-900 text-sm hover:bg-amber-50 disabled:opacity-50">
               {sigilBusy ? "Binding…" : "Bind"}
             </button>
           </div>
+          {!intent.trim() && question.trim() && (
+            <div className="mt-2 text-[11px] text-amber-200/60">
+              Will use your question: <span className="italic text-amber-100/80">"{question}"</span>
+              <button
+                type="button"
+                onClick={() => setIntent(question)}
+                className="ml-2 underline hover:text-amber-100"
+              >
+                edit
+              </button>
+            </div>
+          )}
           {sigil && (
             <div className="mt-6 grid gap-6 md:grid-cols-2 items-center">
               <div className="flex justify-center">
