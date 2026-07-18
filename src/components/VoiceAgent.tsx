@@ -10,6 +10,7 @@ export type VoiceContext = {
   synthesis?: string;
   positions?: Array<{ position: number; significance: string }>;
   sigil?: { statement: string; reduced: string; has_image: boolean } | null;
+  spell?: { mantra: string; affirmation: string; mandala_seed: string } | null;
   pending_intent?: string;
   pending_spread?: string;
   vision?: { prompt: string; has_image: boolean } | null;
@@ -94,12 +95,15 @@ function summarize(ctx?: VoiceContext): string {
   const visionBlock = ctx.vision
     ? `\n\nA summoned vision is present${ctx.vision.has_image ? " (image rendered)" : ""} — its prompt: ${ctx.vision.prompt}`
     : "";
+  const spellBlock = ctx.spell
+    ? `\n\nActive manifestation spell — mantra: "${ctx.spell.mantra}"; affirmation: "${ctx.spell.affirmation}"; the mandala seed is "${ctx.spell.mandala_seed}".`
+    : "";
   const birthLine = ctx.birthdate ? `\nSeeker's birthdate: ${ctx.birthdate}.` : "";
   return `The seeker asked: ${ctx.question || "(unspoken)"}.${birthLine}
 System: ${ctx.system ?? "unknown"}. Spread: ${ctx.spread ?? "unknown"}.
 Cards drawn:
 ${lines}${posNotes}
-${ctx.synthesis ? `\nSynthesis so far: ${ctx.synthesis}` : ""}${sigilBlock}${pendingBlock}${visionBlock}${horoBlock}${historyBlock}
+${ctx.synthesis ? `\nSynthesis so far: ${ctx.synthesis}` : ""}${sigilBlock}${spellBlock}${pendingBlock}${visionBlock}${horoBlock}${historyBlock}
 
 When you speak, weave the cards, the sigil, the vision, and the current horoscope together into one synthesis — explain how they reinforce or complicate one another for the seeker.`;
 }
