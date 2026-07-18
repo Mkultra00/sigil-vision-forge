@@ -580,3 +580,78 @@ function IChingBoard({ drawn }: { drawn: Drawn[] }) {
     </div>
   );
 }
+
+function HoroscopePanel({
+  h,
+  onSpeak,
+  speakingKey,
+}: {
+  h: Horoscope;
+  onSpeak: (key: string, text: string) => void;
+  speakingKey: string | null;
+}) {
+  return (
+    <section className="mt-10">
+      <h2 className="text-xs tracking-[0.3em] uppercase text-amber-200/60 text-center mb-2">
+        Horoscope — {h.timeframe_label}
+      </h2>
+      <p className="text-center text-[11px] text-stone-500 mb-6">
+        {new Date(h.date).toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" })}
+      </p>
+      <div className="grid gap-8 md:grid-cols-[auto,1fr] items-start rounded-2xl border border-amber-100/10 bg-black/30 backdrop-blur p-6 md:p-8">
+        <div className="flex flex-col items-center gap-4">
+          <ZodiacWheel
+            natal={h.natal_sun?.name ?? null}
+            transitSun={h.transit_sun.name}
+            transitMoon={h.transit_moon?.name}
+            size={320}
+          />
+          <div className="text-xs text-stone-400 text-center space-y-1">
+            {h.natal_sun && (
+              <div><span className="text-amber-200/80">Natal ☉</span> {h.natal_sun.glyph} {h.natal_sun.name}</div>
+            )}
+            <div><span className="text-orange-300/80">Transit ☉</span> {h.transit_sun.glyph} {h.transit_sun.name}</div>
+            <div><span className="text-indigo-200/70">Transit ☾</span> {h.transit_moon.glyph} {h.transit_moon.name}</div>
+          </div>
+        </div>
+        <div>
+          {h.headline && (
+            <p className="font-serif text-xl text-amber-50 italic leading-snug mb-6">"{h.headline}"</p>
+          )}
+          <div className="space-y-5">
+            {h.sections.map((s) => (
+              <div key={s.key} className="border-l border-amber-200/20 pl-4">
+                <div className="flex items-baseline justify-between gap-3">
+                  <div className="text-[10px] tracking-[0.3em] uppercase text-amber-200/70">{s.label}</div>
+                  <button
+                    onClick={() => onSpeak(s.key, s.text)}
+                    disabled={speakingKey === s.key}
+                    className="text-[9px] tracking-[0.25em] uppercase text-amber-200/60 border border-amber-200/20 rounded-full px-2 py-0.5 hover:bg-amber-100/5 disabled:opacity-50"
+                  >
+                    {speakingKey === s.key ? "Speaking…" : "Speak"}
+                  </button>
+                </div>
+                <p className="mt-2 text-sm text-stone-200 leading-relaxed">{s.text}</p>
+              </div>
+            ))}
+          </div>
+          {h.synthesis && (
+            <div className="mt-6 rounded-xl border border-amber-100/10 bg-black/40 p-5">
+              <div className="flex items-center justify-between mb-2">
+                <div className="text-[10px] tracking-[0.3em] uppercase text-amber-200/60">Synthesis</div>
+                <button
+                  onClick={() => onSpeak("synthesis", h.synthesis)}
+                  disabled={speakingKey === "synthesis"}
+                  className="text-[10px] tracking-[0.25em] uppercase text-amber-200/80 border border-amber-200/30 rounded-full px-3 py-1 hover:bg-amber-100/5 disabled:opacity-50"
+                >
+                  {speakingKey === "synthesis" ? "Speaking…" : "Hear it spoken"}
+                </button>
+              </div>
+              <p className="text-stone-200 font-serif italic leading-relaxed">{h.synthesis}</p>
+            </div>
+          )}
+        </div>
+      </div>
+    </section>
+  );
+}
